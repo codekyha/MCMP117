@@ -1,0 +1,12 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+*.sh text eol=lf
+*.c text eol=lf
+*.py text eol=lf
+Makefile text eol=lf
+Kbuild text eol=lf
+*.pptx binary
+*.pdf binary
+*.zip binary
+*.png binary
+*.jpg binary

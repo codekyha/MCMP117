@@ -1,0 +1,19 @@
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+missfont.log
+# compiled programs and objects
+*.o
+*.ko
+*.mod*
+*.cmd
+Module.symvers
+modules.order
+__pycache__/
+# office lock files
+~$*

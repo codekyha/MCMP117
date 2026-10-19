@@ -1,0 +1,790 @@
+% =====================================================================
+%  MCMP117 -- Fundamentals of Operating Systems
+%  Week 8 Course Notes: Midterm Review & Practice (Study Guide)
+%  Compile with XeLaTeX (twice):  xelatex MCMP117_Week8_Notes.tex
+%  Needs ./figures/ and the ../code/ folder.
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+\newcommand{\weeknum}{8}
+% ---------- Page & fonts ---------------------------------------------
+\usepackage[a4paper,margin=2.3cm,headheight=15pt]{geometry}
+\usepackage{fontspec}
+\IfFontExistsTF{Calibri}{\setmainfont{Calibri}}{\setmainfont{Carlito}}
+\IfFontExistsTF{Cambria}{\newfontfamily\headfont{Cambria}}{\newfontfamily\headfont{Caladea}}
+\IfFontExistsTF{Consolas}{\setmonofont[Scale=0.95]{Consolas}}{\setmonofont[Scale=0.88]{DejaVu Sans Mono}}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\linespread{1.12}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+
+% ---------- Colours (course design system) ----------------------------
+\usepackage{xcolor}
+\definecolor{dark}{HTML}{212121}
+\definecolor{charcoal}{HTML}{36454F}
+\definecolor{slate}{HTML}{50808E}
+\definecolor{mint}{HTML}{02C39A}
+\definecolor{mintdeep}{HTML}{028090}
+\definecolor{light}{HTML}{F2F2F2}
+\definecolor{muted}{HTML}{6B7679}
+
+% ---------- Packages ---------------------------------------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{needspace}
+\graphicspath{{figures/}}
+\usepackage[font=small,labelfont={bf,color=mintdeep},justification=centering]{caption}
+\usepackage{booktabs,longtable,array,tabularx}
+\usepackage{enumitem}
+\setlist{itemsep=0.25em,topsep=0.3em}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{xurl}
+\usepackage[colorlinks=true,linkcolor=mintdeep,urlcolor=mintdeep,citecolor=mintdeep]{hyperref}
+
+% ---------- Headings ----------------------------------------------------
+\titleformat{\section}{\headfont\Large\bfseries\color{charcoal}}{\color{mint}\thesection}{0.7em}{}
+\titleformat{\subsection}{\headfont\large\bfseries\color{charcoal}}{\color{mintdeep}\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\headfont\normalsize\bfseries\color{mintdeep}}{}{0em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.6em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.4em}
+
+% ---------- Header / footer -----------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}MCMP117 --- Fundamentals of Operating Systems}
+\fancyhead[R]{\small\color{muted}Week \weeknum{} Notes}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ---------- Boxes ---------------------------------------------------------
+\newtcolorbox{keyidea}[1][Key idea]{enhanced,breakable,colback=charcoal,colframe=charcoal,
+  coltext=white,fonttitle=\headfont\bfseries\color{mint},title={#1},
+  attach title to upper={\par\smallskip},boxrule=0pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt}
+\newtcolorbox{example}[1][Worked example]{enhanced,colback=light,colframe=light,
+  fonttitle=\headfont\bfseries\color{mintdeep},title={#1},attach title to upper={\par\smallskip},
+  boxrule=0pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt}
+\newtcolorbox{tryit}[1][Try it yourself]{enhanced,breakable,colback=white,colframe=mint,
+  fonttitle=\headfont\bfseries\color{mintdeep},title={#1},attach title to upper={\par\smallskip},
+  boxrule=0.8pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt}
+\newtcolorbox{histnote}[1][Historical note]{enhanced,breakable,colback=white,colframe=slate!40,
+  fonttitle=\headfont\bfseries\color{slate},title={#1},attach title to upper={\par\smallskip},
+  boxrule=0.5pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt,fontupper=\small}
+
+% Photo helper: fits image inside a box, never distorted (keepaspectratio)
+\newcommand{\photo}[3]{\includegraphics[width=#1,height=#2,keepaspectratio]{#3}}
+
+\newcommand{\term}[1]{\textbf{\color{mintdeep}#1}}
+\newcommand{\cmd}[1]{\texttt{#1}}
+
+
+% ---------- Code listings ----------------------------------------------------
+\usepackage{listings}
+\lstdefinestyle{course}{
+  basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  backgroundcolor=\color{dark}, rulecolor=\color{dark}, frame=single, framesep=6pt,
+  xleftmargin=8pt, xrightmargin=8pt, aboveskip=0.8em, belowskip=0.6em,
+  basicstyle=\ttfamily\small\color{light},
+  keywordstyle=\color{mint}\bfseries, commentstyle=\color{white!60}\itshape,
+  stringstyle=\color{orange!70!yellow}, numberstyle=\tiny\color{muted},
+  numbers=left, numbersep=10pt, showstringspaces=false, breaklines=true,
+  tabsize=4, upquote=true}
+\lstdefinestyle{term}{style=course, numbers=none, keywordstyle=\color{light},
+  commentstyle=\color{white!60}, stringstyle=\color{light}}
+\lstset{style=course,language=C}
+\usepackage{textcomp}
+
+\begin{document}
+% ============================ Week 8 body ============================
+% Study Guide for the midterm (Weeks 1--7) + formula sheet + practice exam with worked solutions.
+% Tables marked "generated" are produced by ../code/gen_tables.py from the simulators in ../code/osim.py.
+\setlength{\emergencystretch}{3em}
+\tcbset{breakable}
+% Gantt-chart helpers (same macro and colours as the Week 5 notes)
+\definecolor{amber}{HTML}{C98A1B}
+\colorlet{colP1}{mint}\colorlet{txtP1}{dark}
+\colorlet{colP2}{slate}\colorlet{txtP2}{white}
+\colorlet{colP3}{amber}\colorlet{txtP3}{white}
+\colorlet{colP4}{charcoal}\colorlet{txtP4}{white}
+% \gantt{unit in cm per ms}{P/start/end, ...}
+\newcommand{\gantt}[2]{%
+\begin{tikzpicture}[x=#1cm,y=1cm]
+\foreach \p/\a/\b in {#2} {
+  \fill[col\p] (\a,0) rectangle (\b,0.62);
+  \draw[white,line width=1.2pt] (\a,0) -- (\a,0.62);
+  \node[font=\small\bfseries,text=txt\p] at ({(\a+\b)/2},0.31) {\p};
+  \draw[muted] (\a,0) -- (\a,-0.1) node[below,font=\scriptsize,text=muted,inner sep=1.5pt] {\a};
+  \draw[muted] (\b,0) -- (\b,-0.1) node[below,font=\scriptsize,text=muted,inner sep=1.5pt] {\b};
+}
+\end{tikzpicture}}
+\newcommand{\gen}[1]{\input{../code/tex/#1}}
+\newcommand{\pts}[1]{\textcolor{mintdeep}{\textbf{[#1~pt]}}\enspace}
+
+\thispagestyle{empty}
+\begin{tcolorbox}[enhanced,colback=dark,colframe=dark,arc=0pt,boxrule=0pt,
+  left=18pt,right=18pt,top=20pt,bottom=20pt,coltext=white]
+{\small\color{mint}\textsc{MCMP117 \,·\, Week 8 \,·\, Study Guide}}\par\medskip
+{\headfont\fontsize{26}{30}\selectfont\bfseries Fundamentals of Operating Systems}\par\medskip
+{\large Midterm Review \& Practice: Weeks 1--7}\par\smallskip
+{\small\itshape\color{white!70} Everything you need for the midterm in one place: summaries, formulas, worked problems and a full practice exam.}
+\end{tcolorbox}
+
+\vspace{0.4em}
+{\small
+\textbf{Instructor:} Asst.\ Prof.\ Dr.\ (Ph.D.) Hasan Oğuz\\
+Head of the Electronical Communication Technology Programme, Vocational School\\
+Istanbul Okan University\par}
+
+\vspace{0.8em}
+\begin{keyidea}[What you should be able to do after this week]
+\begin{enumerate}[leftmargin=1.4em]
+  \item Explain every key term of Weeks~1--7 in one or two sentences, with a concrete example.
+  \item Draw the standard diagrams from memory: the five-state process diagram, the system-call path, the paging hardware with a TLB, the page-fault steps, the directory structures.
+  \item Solve every numerical question type of the course: utilisation and overhead formulas, \cmd{fork()} counting, Amdahl's law, Gantt charts with waiting/turnaround/response times, placement with first-, best- and worst-fit, address translation, effective access time (TLB and page faults), page-replacement frame tables and direct-access block arithmetic.
+  \item State the course conventions (scheduling ties, priority order, Round Robin arrivals, the TLB formula) and use them consistently.
+  \item Write a complete 90-minute practice exam and mark it with the worked solutions.
+\end{enumerate}
+\end{keyidea}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+% =====================================================================
+\section{The Midterm Exam}
+\label{sec:exam}
+\subsection{Logistics}
+Items in square brackets will be confirmed by the instructor on the course Telegram channel; check it before the exam day.
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{4.0cm} X}
+\toprule
+\textbf{Item} & \textbf{Details} \\
+\midrule
+Date and time & [to be announced] \\
+Room & [to be announced] \\
+Duration & [90] minutes \\
+Covers & Weeks~1--7 (lectures, slides and course notes) \\
+Allowed materials & pens; [a basic, non-programmable calculator --- to be confirmed]; [closed book, no notes, no phones --- to be confirmed]; [formula sheet provided: yes/no --- to be confirmed] \\
+Bring & your student ID; arrive 10 minutes early \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Format}
+The sample paper distributed with this week's material (\texttt{exam/MCMP117\_Midterm\_Sample.pdf}) and the practice exam in Section~\ref{sec:practice} both follow this structure; the real paper follows it unless announced otherwise.
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+\textbf{Part} & \textbf{Question type} & \textbf{Points} & \textbf{Suggested time} \\
+\midrule
+A & 10 multiple-choice questions, 2 points each & 20 & 15 min \\
+B & 4 short-answer questions, 5 points each & 20 & 20 min \\
+C & 5 numerical problems & 60 & 45 min \\
+ & reading at the start, checking at the end & & $5 + 5$ min \\
+\midrule
+ & \textbf{Total} & \textbf{100} & \textbf{[90] min} \\
+\bottomrule
+\end{tabular}
+\end{center}
+With $90$ minutes for $100$ points you have about $0.9$ minutes per point: a 2-point question should not take $10$ minutes.
+
+\subsection{Course conventions: state them in your answers}
+Textbooks differ in small details, so the course fixed the following conventions (Weeks~5 and~6). Write the relevant one at the top of a numerical answer.
+\begin{keyidea}[Conventions used in MCMP117]
+\begin{itemize}[leftmargin=1.2em]
+  \item \textbf{Scheduling:} context-switch time is taken as $0$ (switches are counted separately); ties are broken by arrival time, then by process name; a \emph{smaller} priority number means a \emph{higher} priority; in Round Robin a process that arrives at the same instant as a quantum expires enters the ready queue \emph{before} the preempted process.
+  \item \textbf{TLB:} the lookup is counted on every access and a miss costs one extra memory access: $\text{EAT} = t_{\text{TLB}} + (2-\alpha)\,t_m$.
+  \item \textbf{Placement:} holes are listed in address order; a request is carved from the beginning of the chosen hole.
+  \item \textbf{Page replacement:} all frames start empty; the new page goes into the victim's frame.
+\end{itemize}
+\end{keyidea}
+
+\subsection{How to use this study guide}
+Sections~\ref{sec:w1}--\ref{sec:w7} give, for each week, a short summary, the formulas, the typical exam questions and a worked example; the worked examples are the problems solved on this week's slides. Section~\ref{sec:sheet} is a one-page formula sheet. Section~\ref{sec:practice} is a complete practice exam: write it in $90$ minutes \emph{without} looking at anything, then mark it with the solutions in Section~\ref{sec:solutions}. Every number in this guide was computed by the Python scripts in the \texttt{code/} folder (Section~\ref{sec:check}).
+
+% =====================================================================
+\section{Week 1: Introduction and History}
+\label{sec:w1}
+\subsection*{Summary}
+A computer follows instructions: input $\to$ process $\to$ output, with the program stored in memory (the \term{stored-program} idea). A first working definition: the OS is the program that starts first and manages everything else, so that other programs can run; it shares the hardware safely and hides its hard parts. History moved through generations, each solving the problem of an expensive \emph{idle} processor:
+\begin{itemize}
+  \item \textbf{No OS} (ENIAC, 1945): one job at a time, programmed by rewiring plugboards.
+  \item \textbf{Batch processing} (GM-NAA~I/O, 1956, often called the first OS): a \term{resident monitor} loads and runs jobs one after another, removing the human set-up time.
+  \item \textbf{Multiprogramming} (1960s): several jobs in memory; when one waits for I/O, the CPU switches to another.
+  \item \textbf{Time-sharing} (CTSS at MIT, 1961): each user gets a short \term{time quantum} in rotation and experiences an interactive machine.
+  \item IBM System/360 and OS/360 (1964): one OS for a family of machines. Multics (1965--69) inspired \textbf{UNIX} (Bell Labs, 1969; rewritten in C in 1973, hence portable).
+  \item Personal computers (Apple~II 1977, IBM PC and MS-DOS 1981, Macintosh 1984, Windows~95), \textbf{Linux} (1991, free UNIX-like kernel; with GNU a complete free OS), smartphones (iPhone 2007, Android 2008 on a Linux kernel), the cloud (AWS 2006, virtual machines, containers).
+\end{itemize}
+
+\begin{keyidea}[Week 1 formulas]
+\[
+U = \frac{t_{\text{run}}}{t_{\text{run}} + t_{\text{setup}}}, \qquad
+U(n) = 1 - p^{\,n}, \qquad
+T_{\text{wait}} \approx n\,q .
+\]
+$U$: CPU utilisation; $p$: fraction of time a job waits for I/O; $n$: number of jobs in memory (or users); $q$: time quantum.
+\end{keyidea}
+
+\subsection*{Typical questions}
+Match milestones with the idea they introduced (multiple choice); explain the difference between multiprogramming (CPU efficiency) and time-sharing (user experience); explain why rewriting UNIX in C mattered; small utilisation calculations.
+
+\begin{example}[Worked problem 1(a) of the slides: multiprogramming]
+Jobs wait for I/O a fraction $p = 0.6$ of the time. Then $U(1) = 1 - 0.6 = 40\%$, $U(3) = 1 - 0.6^{3} = 1 - 0.216 = 78.4\%$ and $U(6) = 1 - 0.6^{6} \approx 95.3\%$. The smallest $n$ with $U \ge 95\%$ needs $0.6^{n} \le 0.05$, i.e.\ $n \ge \ln 0.05 / \ln 0.6 \approx 5.86$, so $n = 6$ (check: $0.6^{5} \approx 0.078 > 0.05$, $0.6^{6} \approx 0.047 \le 0.05$).
+
+\textbf{Batch:} with $t_{\text{run}} = 4$~min and $t_{\text{setup}} = 6$~min, $U = 4/(4+6) = 40\%$; a monitor that cuts the set-up to $1$~min gives $U = 4/5 = 80\%$. \textbf{Time-sharing:} $30$ users with $q = 20$~ms wait at most about $n\,q = 30 \times 20\ \text{ms} = 600\ \text{ms}$.
+\end{example}
+
+% =====================================================================
+\section{Week 2: Definitions, Goals, Components and Structures}
+\label{sec:w2}
+\subsection*{Summary}
+\begin{itemize}
+  \item \textbf{Working definition:} the OS is the software layer that manages the hardware and offers programs a simpler, safer machine; its always-resident core is the \term{kernel}. Kernel, system programs (shell, \cmd{ls}, compiler) and application programs are different layers.
+  \item \textbf{Two views:} top-down, the OS is an \emph{extended machine} that offers clean abstractions (files instead of sectors, processes instead of registers); bottom-up, it is a \emph{resource manager} that multiplexes resources in time (CPU, printer) and in space (memory, disk).
+  \item \textbf{Design goals:} convenience, efficiency and the ability to evolve; they conflict and are weighted differently on PCs, servers, phones, embedded and real-time systems.
+  \item \textbf{Four components:} hardware, operating system, application programs, users.
+  \item \textbf{Interrupts:} a device controller signals the CPU, which saves the state, runs the handler found in the \term{interrupt vector}, and resumes; the OS is interrupt-driven. Polling wastes CPU time.
+  \item \textbf{Storage hierarchy:} registers ($\approx 0.3$~ns), cache, RAM ($\approx 100$~ns), SSD ($\approx 50\ \mu$s), HDD ($\approx 5$~ms); registers, cache and RAM are volatile.
+  \item \textbf{Dual-mode operation:} mode bit $0$ = kernel mode, $1$ = user mode; a privileged instruction in user mode traps to the OS; a \term{system call} switches to kernel mode and back. A measured system call cost $\approx 116$~ns, a function call $\approx 1.5$~ns.
+  \item \textbf{Structures:} simple (MS-DOS, no protection), monolithic (UNIX, Linux: fast, fragile), layered (THE: easy to debug, slow), microkernel (MINIX~3, QNX, seL4: reliable, slower), modular (Linux loadable kernel modules), hybrid (Windows, macOS, Android).
+\end{itemize}
+
+\begin{keyidea}[Week 2 formulas]
+\[
+\text{polling share} = f \cdot t_{\text{check}}, \qquad
+T_{\text{mono}} = 2t_{s} + t_{w}, \qquad
+T_{\mu} = 4t_{s} + 2t_{c} + t_{w}.
+\]
+$t_s$: one mode switch; $t_c$: one message copy; $t_w$: useful work.
+\end{keyidea}
+
+\subsection*{Typical questions}
+Explain the two views with an example each; which design goal matters most for a phone, a server, a brake controller; what happens when a user program executes a privileged instruction; difference between \cmd{printf()} and \cmd{write()}; one advantage and one disadvantage of a monolithic kernel and of a microkernel.
+
+\begin{example}[Microkernel cost and polling]
+With $t_s = 0.1\ \mu$s, $t_c = 0.15\ \mu$s and $t_w = 2\ \mu$s: $T_{\text{mono}} = 0.2 + 2 = 2.2\ \mu$s, $T_{\mu} = 0.4 + 0.3 + 2 = 2.7\ \mu$s, so the microkernel is $2.7/2.2 \approx 1.23$ times slower for this request; the longer the useful work, the closer the ratio comes to $1$. Polling a device $f = 200$ times per second at $t_{\text{check}} = 5\ \mu$s costs $200 \times 5\times10^{-6} = 10^{-3} = 0.1\%$ of the CPU.
+\end{example}
+
+% =====================================================================
+\section{Week 3: OS Services, System Calls and Processes}
+\label{sec:w3}
+\subsection*{Summary}
+\begin{itemize}
+  \item \textbf{Services} for the user: user interface, program execution, I/O operations, file-system manipulation, communication (shared memory or message passing), error detection. For the system itself: resource allocation, accounting and logging, protection and security.
+  \item \textbf{API, wrapper, system call:} \cmd{printf()} is an API function; the \cmd{write()} wrapper puts the system-call number in \texttt{rax} and the parameters in registers and executes \texttt{syscall}; the kernel checks the number, looks it up in the \term{system-call table} and calls \cmd{sys\_write()}. \cmd{strlen()} never makes a system call.
+  \item \textbf{Parameters} are passed in registers, in a memory block whose address is in a register, or on the stack. Six categories: process control, file management, device management, information maintenance, communication, protection.
+  \item A \term{process} is a program in execution, with text, data, bss, heap and stack regions. Five states: new, ready, running, waiting, terminated; there is no arrow from waiting to running.
+  \item The \term{PCB} holds state, PID/PPID, program counter, registers, scheduling, memory-management, accounting and I/O status information. A \term{context switch} saves the old PCB and loads the new one; it is pure overhead.
+  \item \cmd{fork()} returns $0$ in the child and the child's PID in the parent; \cmd{exec()} replaces the program (same PID); \cmd{wait()} collects the child. A \term{zombie} has terminated but has not been waited for; an \term{orphan}'s parent terminated first (Linux re-parents it to PID~1).
+\end{itemize}
+
+\begin{keyidea}[Week 3 formulas]
+\[
+\text{context-switch overhead} = \frac{s}{q+s};
+\]
+$n$ calls of \cmd{fork()}, each executed by every existing process, give $2^{n}$ processes ($2^{n}-1$ of them created).
+\end{keyidea}
+
+\subsection*{Typical questions}
+Draw the five-state diagram and name the event behind each transition; list PCB fields; classify system calls into the six categories; what \cmd{fork()} returns; zombie versus orphan; overhead and \cmd{fork()} counting.
+
+\begin{example}[Worked problems 1(b) and 1(c) of the slides]
+\textbf{Overhead.} With $s = 4\ \mu$s: for $q = 2\ \text{ms} = 2000\ \mu$s the overhead is $4/2004 \approx 0.20\%$; for $q = 50\ \mu$s it is $4/54 \approx 7.4\%$. Tiny quanta waste the CPU.
+
+\textbf{fork().} \cmd{fork(); fork(); printf("A\textbackslash n"); fork(); printf("B\textbackslash n");} Every existing process executes every later \cmd{fork()}. Before the first \cmd{printf} there are $2 \times 2 = 4$ processes, so \texttt{A} is printed $4$ times; the third fork doubles them to $8$ and \texttt{B} is printed $8$ times; $8$ processes in total, $7$ created. (A real run with \cmd{os.fork()} in \texttt{review\_problems.py} printed exactly $4$ \texttt{A} and $8$ \texttt{B}. Exam questions assume output to a terminal; with output redirected to a file, \cmd{printf}'s buffer is copied by \cmd{fork()}, as shown in Week~3.)
+\end{example}
+
+% =====================================================================
+\section{Week 4: Threads and CPU-Scheduling Basics}
+\label{sec:w4}
+\subsection*{Summary}
+\begin{itemize}
+  \item A \term{thread} has its own thread ID, program counter, registers and stack; it shares the code, global data, heap and open files of its process. Benefits: responsiveness, resource sharing, economy (a thread was about $4$ times cheaper to create than a process on our machine), scalability.
+  \item \term{Concurrency}: several tasks make progress; \term{parallelism}: several tasks run at the same instant (needs at least two cores).
+  \item User-level threads (fast, but a blocking call blocks the whole process) versus kernel-level threads. Models: many-to-one, one-to-one (Linux, Windows), many-to-many (Go, Java virtual threads).
+  \item Processes alternate CPU and I/O bursts (CPU-bound versus I/O-bound). The short-term scheduler chooses from the ready queue at four decision points (running$\to$waiting, running$\to$ready, waiting$\to$ready, termination); non-preemptive scheduling uses only the first and the last. The \term{dispatcher} switches context, switches to user mode and jumps to the saved PC; its time is the dispatch latency.
+\end{itemize}
+
+\Needspace{12\baselineskip}
+\begin{keyidea}[Week 4 formulas]
+\[
+\text{speedup}(N) \le \frac{1}{S + \dfrac{1-S}{N}}, \qquad \lim_{N\to\infty} \text{speedup} = \frac{1}{S};
+\]
+\begin{align*}
+T_{\text{turnaround}} &= T_{\text{completion}} - T_{\text{arrival}}, &
+T_{\text{waiting}} &= T_{\text{turnaround}} - T_{\text{burst}}, &
+T_{\text{response}} &= T_{\text{first run}} - T_{\text{arrival}},
+\end{align*}
+\[
+\text{CPU utilisation} = \frac{B}{T}, \qquad \text{throughput} = \frac{n}{T}.
+\]
+Maximise utilisation and throughput; minimise turnaround, waiting and response time.
+\end{keyidea}
+
+\subsection*{Typical questions}
+Which items are shared and which are private (the stack is private, the heap is shared); which model Linux uses; concurrency versus parallelism; Amdahl speedups; the four decision points; computing the criteria from a Gantt chart.
+
+\begin{example}[Worked problem 1(d) of the slides: Amdahl's law]
+With $S = 0.2$: $N = 2$: $1/(0.2 + 0.4) \approx 1.67$; $N = 4$: $1/(0.2 + 0.2) = 2.5$; $N = 8$: $1/(0.2 + 0.1) \approx 3.33$; the limit is $1/0.2 = 5$. Eight cores give only $3.33$. Conversely, a speedup of at least $3$ on $4$ cores requires $S + (1-S)/4 \le 1/3$, i.e.\ $S \le 1/9 \approx 0.11$.
+\end{example}
+
+% =====================================================================
+\section{Week 5: Scheduling Algorithms and Synchronisation}
+\label{sec:w5}
+\subsection*{Summary: scheduling}
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}l >{\raggedright\arraybackslash}X c >{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Rule} & \textbf{Preemptive} & \textbf{Remember} \\
+\midrule
+FCFS & FIFO ready queue; run to completion & no & convoy effect \\
+SJF & shortest next CPU burst first & no & optimal average wait when all are ready; burst must be predicted \\
+SRTF & a newcomer shorter than the \emph{remaining} time preempts & yes & minimum average wait; long jobs may starve \\
+Priority & highest priority (smallest number) first & either & starvation; cure: aging \\
+Round Robin & quantum $q$; preempted process to the tail & yes & $q$ too large $\to$ FCFS; too small $\to$ overhead \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Linux schedules normal tasks for fairness (CFS, EEVDF since kernel 6.6), weighted by the nice value; multilevel feedback queues approximate SJF by watching behaviour.
+
+\subsection*{Summary: synchronisation}
+\begin{itemize}
+  \item A \term{race condition} occurs when several threads access the same data concurrently, at least one writes, and the outcome depends on the order; \texttt{counter++} is load--add--store.
+  \item The \term{critical-section problem}: entry, critical, exit and remainder sections; a solution needs \emph{mutual exclusion}, \emph{progress} and \emph{bounded waiting}.
+  \item Disabling interrupts fails on multiprocessors and is privileged; Peterson's solution (two threads, needs memory barriers on modern CPUs); atomic \texttt{test\_and\_set} and compare-and-swap; \term{mutex locks} (\texttt{acquire}/\texttt{release}; spinlock versus sleeping).
+  \item A \term{semaphore} $S$ is accessed only by \texttt{wait(S)} (P: \texttt{while (S <= 0); S--;}) and \texttt{signal(S)} (V: \texttt{S++}); binary (initial $1$, like a mutex) or counting (initial $N$). Bounded buffer: \texttt{empty} $= n$, \texttt{full} $= 0$, \texttt{mutex} $= 1$, with \texttt{wait(empty)} \emph{before} \texttt{wait(mutex)}.
+  \item \term{Deadlock}: every thread of a group waits for an event only another member can cause; prevent it by acquiring locks in one global order. Starvation is different: others do make progress.
+\end{itemize}
+
+\Needspace{12\baselineskip}
+\begin{keyidea}[Week 5 formulas]
+\[
+\tau_{n+1} = \alpha\, t_n + (1-\alpha)\, \tau_n, \qquad
+\text{RR: wait for the next turn} \le (n-1)\,q, \qquad
+\text{switch overhead} = \frac{s}{q+s}.
+\]
+\end{keyidea}
+
+\subsection*{Typical questions}
+Gantt chart plus a table of finish, turnaround, waiting and response times and their averages for two or three algorithms; exponential averaging; a losing interleaving of \texttt{counter++}; the three requirements; semaphore traces; why the order of the two \texttt{wait} calls in the producer matters.
+
+\subsection{Worked problem 2 of the slides: one job set, five schedulers}
+Jobs (times in ms): P1 (arrival $0$, burst $7$, priority $2$), P2 ($2$, $4$, $1$), P3 ($3$, $2$, $4$), P4 ($5$, $5$, $3$). The total work is $18$~ms and the CPU is never idle. Generated tables:
+
+\textbf{FCFS}\\[0.2em]
+\gen{rv_gantt_fcfs}\\[0.3em]
+{\small\gen{rv_sched_fcfs}}
+
+\textbf{SJF (non-preemptive)}\\[0.2em]
+\gen{rv_gantt_sjf}\\[0.3em]
+At $t=7$ the ready queue holds P2 (4), P3 (2) and P4 (5): P3 is shortest.\\
+{\small\gen{rv_sched_sjf}}
+
+\Needspace{14\baselineskip}
+\textbf{SRTF}\\[0.2em]
+\gen{rv_gantt_srtf}\\[0.3em]
+$t=2$: P2 needs $4 <$ P1's remaining $5$: preempt. $t=3$: P3 needs $2 <$ P2's remaining $3$: preempt. $t=5$: remaining P1 $5$, P2 $3$, P4 $5$: P2 runs. $t=8$: P1 and P4 both need $5$: the tie goes to the earlier arrival, P1.\\
+{\small\gen{rv_sched_srtf}}
+
+\Needspace{14\baselineskip}
+\textbf{Priority (preemptive)}\\[0.2em]
+\gen{rv_gantt_prio}\\[0.3em]
+P2 (priority $1$) takes the CPU from P1 (priority $2$) at $t=2$; P3 has the lowest priority and runs last.\\
+{\small\gen{rv_sched_prio}}
+
+\Needspace{16\baselineskip}
+\textbf{Round Robin, $q = 3$}\\[0.2em]
+\gen{rv_gantt_rr3}\\[0.3em]
+$t=3$: P3 arrives exactly when P1's quantum expires, so the queue is P2, P3, P1. $t=6$: P4 (arrived at $5$) is behind P1, and P2 (1~ms left) joins the tail: P3, P1, P4, P2. $t=8$: P3 done; P1 runs $8$--$11$ and has $1$~ms left; then P4 $11$--$14$, P2 $14$--$15$ (done), P1 $15$--$16$ (done), P4 $16$--$18$.\\
+{\small\gen{rv_sched_rr3}}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Algorithm} & \textbf{Preemptive} & \textbf{Avg waiting} & \textbf{Avg turnaround} & \textbf{Avg response} & \textbf{Switches}\\
+\midrule
+FCFS & no & $5.25$ & $9.75$ & $5.25$ & 3\\
+SJF & no & $4.75$ & $9.25$ & $4.75$ & 3\\
+SRTF & yes & $4$ & $8.5$ & $2$ & 5\\
+Priority & yes & $5.75$ & $10.25$ & $4.75$ & 4\\
+RR, $q=3$ & yes & $7.25$ & $11.75$ & $2.5$ & 7\\
+\bottomrule
+\end{tabular}
+\end{center}
+SRTF gives the smallest average waiting time, as the theory promises; Priority serves importance (P3 waits $13$~ms); RR has the largest average wait but a good average response time.
+
+\begin{example}[Exponential averaging]
+$\alpha = 0.5$, $\tau_0 = 8$~ms, measured bursts $t_0, t_1, t_2 = 6, 10, 4$~ms: $\tau_1 = 0.5\cdot6 + 0.5\cdot8 = 7$, $\tau_2 = 0.5\cdot10 + 0.5\cdot7 = 8.5$, $\tau_3 = 0.5\cdot4 + 0.5\cdot8.5 = 6.25$~ms.
+\end{example}
+
+\subsection{Worked problem 3 of the slides: a race and a semaphore}
+\texttt{counter} $= 10$; thread A executes \texttt{counter++}, thread B \texttt{counter--}, each as load--add--store into its own register. One unlucky order:
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}cllc@{}}
+\toprule
+\textbf{Step} & \textbf{Thread A} & \textbf{Thread B} & \textbf{counter}\\
+\midrule
+1 & load (reg $=10$) & & 10\\
+2 & & load (reg $=10$) & 10\\
+3 & add $1$ (reg $=11$) & & 10\\
+4 & & add $-1$ (reg $=9$) & 10\\
+5 & store & & 11\\
+6 & & store & 9 (should be 10)\\
+\bottomrule
+\end{tabular}
+\end{center}
+There are $\binom{6}{3} = 20$ interleavings that keep each thread's own order. Enumerating them all (\texttt{review\_problems.py}) gives the final value $9$ in $9$ orders, $10$ in $2$ orders and $11$ in $9$ orders: only $2$ of $20$ orders are correct. The fix is a critical section protected by a mutex.
+
+\textbf{Counting semaphore $S = 2$} (two printers), threads T1, T2, T3: T1 \texttt{wait} $\to$ enters, $S=1$; T2 \texttt{wait} $\to$ enters, $S=0$; T3 \texttt{wait} $\to$ blocks; T1 \texttt{signal} $\to S=1$, and T3 immediately passes its \texttt{wait}, $S=0$; T2 \texttt{signal} $\to S=1$; T3 \texttt{signal} $\to S=2$. At most two threads use a printer at any time.
+
+% =====================================================================
+\section{Week 6: Memory Management}
+\label{sec:w6}
+\subsection*{Summary}
+\begin{itemize}
+  \item \textbf{Address binding} at compile time (absolute code), load time (relocatable code) or execution time (needs the \term{MMU}; all modern systems). Logical (virtual) addresses are generated by the CPU; physical addresses are seen by memory.
+  \item \textbf{Base and limit:} the MMU checks $0 \le a < \text{limit}$ and adds the base; otherwise it traps. Loading these registers is privileged.
+  \item \textbf{Swapping} whole processes takes seconds; modern systems swap pages.
+  \item \textbf{Contiguous allocation} with variable partitions: first-fit, best-fit, worst-fit. \term{External fragmentation}: enough free memory, but not contiguous (50-percent rule: up to one third lost); \term{internal fragmentation}: unused memory inside an allocated block. Compaction needs execution-time binding.
+  \item \textbf{Paging:} frames (physical) and pages (logical) of equal size $2^{n}$; the page table maps $p \to f$; no external fragmentation, internal fragmentation of half a page per process on average; valid--invalid and protection bits; shared (reentrant) code pages; multi-level page tables.
+  \item \textbf{TLB:} a small associative cache of $(p, f)$ pairs; high hit ratios thanks to locality.
+  \item \textbf{Segmentation:} address $\langle s, d\rangle$, segment table of (base, limit) pairs; variable sizes bring back external fragmentation. x86-64 Linux uses flat segments and does all translation with paging.
+\end{itemize}
+
+\Needspace{12\baselineskip}
+\begin{keyidea}[Week 6 formulas]
+\begin{gather*}
+0 \le a_{\text{log}} < \text{limit} \;\Rightarrow\; a_{\text{phys}} = \text{base} + a_{\text{log}}, \text{ otherwise trap}; \qquad
+t_{\text{swap}} = \frac{\text{size}}{\text{transfer rate}};\\
+p = \left\lfloor \frac{a}{2^{n}} \right\rfloor, \quad d = a \bmod 2^{n}, \quad a_{\text{phys}} = f\cdot 2^{n} + d; \qquad
+\text{entries} = \frac{2^{m}}{2^{n}};\\
+\text{EAT} = \alpha\,(t_{\text{TLB}} + t_{m}) + (1-\alpha)\,(t_{\text{TLB}} + 2t_{m}) = t_{\text{TLB}} + (2-\alpha)\,t_{m};\\
+\text{simplified } (t_{\text{TLB}}\approx 0)\text{: } \text{EAT} = \alpha\,t_m + (1-\alpha)\,2t_m;\\
+0 \le d < \text{limit}[s] \;\Rightarrow\; a_{\text{phys}} = \text{base}[s] + d, \text{ otherwise trap}.
+\end{gather*}
+\end{keyidea}
+
+\subsection*{Typical questions}
+The three binding times; who sees logical and physical addresses; base/limit translation in decimal and hexadecimal; swap times; placement with the three fits; internal versus external fragmentation; address translation through a page table; page-table size; EAT with a TLB and the hit ratio needed for a target EAT; segment-table translation; paging versus segmentation.
+
+\begin{example}[Base and limit, swapping]
+Base $12000$, limit $2500$: $a = 100 \to 12100$; $a = 2499 \to 14499$ (the last legal byte); $a = 2500$: \textbf{trap} (the check is strict). Swapping a $200$~MB process at $80$~MB/s takes $200/80 = 2.5$~s each way, $5$~s for out plus in.
+\end{example}
+
+\subsection{Worked problem 4 of the slides: first-, best- and worst-fit}
+Holes (size@start, KB, address order): $300@100$, $600@500$, $200@1300$, $450@1700$, $350@2400$ (total $1900$~KB). Requests in order: A $= 340$, B $= 180$, C $= 420$, D $= 500$~KB. Generated table:
+\begin{center}\small\gen{rv_fits}\end{center}
+First-fit: D must wait although $960$~KB are free, because the largest hole is only $350$~KB (external fragmentation). Best-fit places all four. Worst-fit fails twice ($1380$~KB free, largest hole $350$~KB). One example proves nothing in general: in the sample paper first-fit wins and best-fit fails.
+
+\subsection{Worked problem 5 of the slides: paging and the TLB}
+$16$-bit addresses, $4$~KB pages ($n = 12$): $p$ is the first hex digit and $d$ the last three. Page table: $0\to3$, $1\to8$, $2\to6$, $4\to10$, $5\to2$; page $3$ and pages $6$--$15$ invalid.
+\begin{itemize}
+  \item $\texttt{0x1C3B} = 7227$: $p = 1$, $d = \texttt{0xC3B} = 3131$; frame $8$: $8 \times 4096 + 3131 = 35899 = \texttt{0x8C3B}$.
+  \item $\texttt{0x4F0E} = 20238$: $p = 4$, $d = \texttt{0xF0E} = 3854$; frame $10 = \texttt{0xA}$: $\texttt{0xAF0E} = 44814$.
+  \item $\texttt{0x2010}$: $p = 2$, frame $6$: $\texttt{0x6010} = 24592$.
+  \item $\texttt{0x3004}$: $p = 3$ is invalid: \textbf{trap}, no physical address.
+\end{itemize}
+A process of $9000$~B needs $\lceil 9000/4096\rceil = 3$ frames ($9000 = 2\times4096 + 808$), so $4096 - 808 = 3288$~B are lost to internal fragmentation. With $32$-bit addresses, $8$~KB pages and $4$-byte entries a flat page table has $2^{32}/2^{13} = 2^{19} = 524\,288$ entries, i.e.\ $2^{21}$~B $= 2$~MB.
+
+\textbf{TLB:} $t_{\text{TLB}} = 10$~ns, $t_m = 80$~ns, $\alpha = 0.95$:
+\[
+\text{EAT} = 0.95 \times 90 + 0.05 \times 170 = 85.5 + 8.5 = 94\ \text{ns} = 10 + (2 - 0.95)\times 80 .
+\]
+Without a TLB every access costs $2t_m = 160$~ns; the simplified formula gives $0.95\times80 + 0.05\times160 = 84$~ns. For $\text{EAT} = 100$~ns: $10 + (2-\alpha)\,80 = 100 \Rightarrow 2 - \alpha = 1.125 \Rightarrow \alpha = 0.875$.
+
+\begin{example}[Segment table]
+Segment $0$: base $1000$, limit $800$; segment $1$: base $5200$, limit $300$; segment $2$: base $2400$, limit $1500$.
+$\langle 2, 1499\rangle$: $1499 < 1500 \Rightarrow 2400 + 1499 = 3899$.
+$\langle 1, 300\rangle$: $300 \ge 300 \Rightarrow$ \textbf{trap}.
+$\langle 0, 799\rangle$: $799 < 800 \Rightarrow 1000 + 799 = 1799$.
+\end{example}
+
+% =====================================================================
+\section{Week 7: Virtual Memory and File Systems}
+\label{sec:w7}
+\subsection*{Summary: virtual memory}
+\begin{itemize}
+  \item \term{Virtual memory} keeps only the pages in use in RAM; the rest stay in the backing store. It works because of \term{locality of reference}.
+  \item \term{Demand paging} loads a page on its first use; the valid--invalid bit says whether a page is in memory. A \term{page fault} is handled in six steps: reference, trap, locate (page on disk and a free frame), read, update the page table, restart the instruction. Minor faults need no disk I/O, major faults do.
+  \item \term{Copy-on-write}: after \cmd{fork()} pages are shared read-only until one process writes; only the written page is copied.
+  \item \textbf{Page replacement}: FIFO (loaded longest ago; Belady's anomaly possible), OPT (used farthest in the future; minimum faults; needs the future), LRU (used longest ago; approximated by the clock / second-chance algorithm with the reference bit). The dirty bit avoids writing back clean victims.
+  \item \term{Thrashing}: processes spend more time paging than executing; the cure is to reduce the degree of multiprogramming. The \term{working set} $\text{WS}(t,\Delta)$ is the set of distinct pages in the last $\Delta$ references.
+\end{itemize}
+\subsection*{Summary: file systems}
+\begin{itemize}
+  \item A \term{file} has attributes (name, identifier, type, location, size, protection, timestamps) kept in the file control block (the \term{inode} in Linux; the name is in the directory). Operations: create, open, read, write, seek, close, delete (\cmd{unlink}), truncate. \cmd{open()} returns a file descriptor; per-process tables hold the file pointer, the system-wide table the open count.
+  \item \textbf{Access methods}: sequential (tape model), direct (any block $n$; disk model), indexed (search a small index, then read one block).
+  \item \textbf{Directories}: single-level, two-level (UFD/MFD), tree (absolute and relative paths, \texttt{.} and \texttt{..}), acyclic graph (links), general graph (cycles; avoided in practice).
+  \item A \term{hard link} is another directory entry for the same inode (link count); a \term{symbolic link} is a small file containing a path and dangles if the target is removed.
+\end{itemize}
+
+\Needspace{12\baselineskip}
+\begin{keyidea}[Week 7 formulas]
+\[
+\text{EAT} = (1-p)\,t_m + p\,t_{\text{fault}};
+\]
+\[
+\text{byte offset} = k\,R, \quad \text{block} = \left\lfloor \frac{kR}{B} \right\rfloor, \quad \text{offset in block} = kR - \text{block}\cdot B;
+\]
+\[
+D = \sum_i \text{WSS}_i > m \;\Rightarrow\; \text{thrashing}.
+\]
+$p$: page-fault rate; $k$: record number (from $0$); $R$: record size; $B$: block size; $m$: available frames. Always check the record's \emph{last} byte $kR + R - 1$ too.
+\end{keyidea}
+
+\subsection*{Typical questions}
+The six page-fault steps; why the instruction is restarted; copy-on-write and \cmd{fork()}; frame tables for FIFO, LRU and OPT; Belady's anomaly; thrashing and the working set; EAT with page faults and the largest fault rate for a given slow-down; block arithmetic; compare access methods, directory structures, hard and symbolic links.
+
+\subsection{Worked problem 6 of the slides: page replacement}
+Reference string $1, 2, 0, 4, 2, 3, 2, 1, 2, 4, 0, 2, 0, 1$ with $3$ frames, initially empty. Mint: page just loaded; pale: fault column; grey: hit. Generated tables:
+
+\begin{center}
+\begin{minipage}{\linewidth}\centering\textbf{FIFO: 11 faults}\\[0.2em]\gen{rv_frames_FIFO}\end{minipage}\\[0.8em]
+\begin{minipage}{\linewidth}\centering\textbf{LRU: 9 faults}\\[0.2em]\gen{rv_frames_LRU}\end{minipage}\\[0.8em]
+\begin{minipage}{\linewidth}\centering\textbf{OPT: 7 faults}\\[0.2em]\gen{rv_frames_OPT}\end{minipage}
+\end{center}
+FIFO: a hit (the reference to $2$ at position~5) does not change the order of arrival. LRU at the reference to $3$: the frames hold $4, 2, 0$, and $0$ was used longest ago, so the hot page $2$ stays. OPT at the reference to $4$: the next uses are $2$ (position~5), $1$ (position~8), $0$ (position~11), so $0$ leaves. The string has $5$ distinct pages, so every algorithm has at least $5$ (compulsory) faults. With $4$ frames: FIFO $8$, LRU $7$, OPT $6$ faults --- no anomaly on this string.
+
+\subsection{Worked problem 7 of the slides: page-fault EAT and block arithmetic}
+\textbf{(a)} $t_m = 100$~ns, $t_{\text{fault}} = 6\ \text{ms} = 6\,000\,000$~ns, $p = 0.0002$:
+\[
+\text{EAT} = 0.9998 \times 100 + 0.0002 \times 6\,000\,000 = 99.98 + 1200 = 1299.98\ \text{ns},
+\]
+about $13$ times slower than RAM, with only one fault per $5000$ accesses. For a slow-down below $5\%$: $100 + p\,(6\,000\,000 - 100) < 105 \Rightarrow p < 5/5\,999\,900 \approx 8.3\times10^{-7}$, at most one fault per about $1.2$ million accesses.
+
+\textbf{(b)} Records of $R = 120$~B, blocks of $B = 4096$~B, record $k = 750$: byte offset $750 \times 120 = 90\,000$; block $\lfloor 90\,000/4096\rfloor = 21$; offset in block $90\,000 - 21 \times 4096 = 3984$. The last byte is $90\,119$ and $\lfloor 90\,119/4096\rfloor = 22$: the record \emph{crosses} a block boundary (bytes $3984$--$4095$ of block $21$ and $0$--$7$ of block $22$), so two block reads are needed. Record $40$ starts at byte $4800$, in block $1$ at offset $704$, and fits completely.
+
+\begin{example}[Working set]
+Four processes with working-set sizes $4, 6, 3, 5$ need $D = 18$ frames. With only $m = 16$ frames available, $D > m$: thrashing will occur, and the OS should suspend one process.
+\end{example}
+
+% =====================================================================
+\section{Common Mistakes and Exam Strategy}
+\label{sec:mistakes}
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.0cm} X@{}}
+\toprule
+\textbf{Topic} & \textbf{Where points are usually lost} \\
+\midrule
+Scheduling & Waiting time is turnaround minus burst, not the start time; SRTF compares with the \emph{remaining} time; RR newcomers go before the preempted process; forgetting the averages. \\
+Units & $8\ \text{ms} = 8\,000\,000\ \text{ns}$; $2\ \text{ms} = 2000\ \mu\text{s}$; KB $= 1024$~B in paging questions. \\
+Paging & The offset is never translated; an invalid page traps and has no physical address; $a = \text{limit}$ already traps (strict $<$). \\
+Frame tables & FIFO: a hit does not change the order; LRU: a hit makes the page most recent; OPT: look forward. Count the faults twice. \\
+Symbols & $p$ is the I/O-wait fraction in Week~1 but the page-fault rate in Week~7; $\alpha$ is the averaging weight in Week~5 but the TLB hit ratio in Week~6. \\
+\cmd{fork()} & Every existing process executes every later \cmd{fork()}. \\
+Definitions & Concurrency $\ne$ parallelism; mutual exclusion $\ne$ progress $\ne$ bounded waiting; starvation $\ne$ deadlock; hard link $\ne$ symbolic link. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\textbf{Strategy.} Read the whole paper first ($5$~min). Start with what you know best. For every numerical answer write the formula, substitute the numbers with units, compute, and box the result: method earns partial credit even when the arithmetic slips. Draw Gantt charts and frame tables neatly, with times. If you are stuck, write the relevant formula and move on. Keep $5$~minutes at the end to check units and averages.
+
+% =====================================================================
+\newpage
+\section{Formula Sheet}
+\label{sec:sheet}
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.55}
+\begin{tabularx}{\linewidth}{@{}c >{\raggedright\arraybackslash}p{4.3cm} >{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Wk} & \textbf{Quantity} & \textbf{Formula} \\
+\midrule
+1 & Batch utilisation & $U = \dfrac{t_{\text{run}}}{t_{\text{run}} + t_{\text{setup}}}$ \\
+1 & Multiprogramming utilisation & $U(n) = 1 - p^{\,n}$ \quad ($p$: I/O-wait fraction) \\
+1 & Time-sharing worst-case wait & $T_{\text{wait}} \approx n\,q$ \\
+2 & Polling cost & $f \cdot t_{\text{check}}$ \\
+2 & Monolithic vs microkernel & $T_{\text{mono}} = 2t_s + t_w$; \quad $T_{\mu} = 4t_s + 2t_c + t_w$ \\
+3, 5 & Context-switch overhead & $\dfrac{s}{q+s}$ \\
+3 & $n$ forks in a row & $2^{n}$ processes, $2^{n}-1$ created \\
+4 & Amdahl's law & $\text{speedup}(N) \le \dfrac{1}{S + (1-S)/N}$; \quad limit $\dfrac{1}{S}$ \\
+4 & Turnaround, waiting & $T_{\text{turnaround}} = T_{\text{completion}} - T_{\text{arrival}}$; \quad $T_{\text{waiting}} = T_{\text{turnaround}} - T_{\text{burst}}$ \\
+4 & Response & $T_{\text{response}} = T_{\text{first run}} - T_{\text{arrival}}$ \\
+4 & Utilisation, throughput & $\dfrac{B}{T}$ (busy / total); \quad $\dfrac{n}{T}$ \\
+5 & Exponential average & $\tau_{n+1} = \alpha\, t_n + (1-\alpha)\, \tau_n$ \\
+5 & Round Robin bound & wait for the next turn $\le (n-1)\,q$ \\
+6 & Base and limit & $0 \le a < \text{limit} \Rightarrow a_{\text{phys}} = \text{base} + a$, else trap \\
+6 & Swap time & size / transfer rate \\
+6 & 50-percent rule & $\dfrac{0.5N}{N + 0.5N} = \dfrac13$ of memory may be lost \\
+6 & Paging & $p = \lfloor a / 2^{n}\rfloor$, \ $d = a \bmod 2^{n}$, \ $a_{\text{phys}} = f\cdot 2^{n} + d$ \\
+6 & Page-table size & $2^{m}/2^{n}$ entries $\times$ entry size \\
+6 & TLB (course convention) & $\text{EAT} = \alpha(t_{\text{TLB}} + t_m) + (1-\alpha)(t_{\text{TLB}} + 2t_m) = t_{\text{TLB}} + (2-\alpha)\,t_m$ \\
+6 & TLB (simplified) & $\text{EAT} = \alpha\,t_m + (1-\alpha)\,2t_m$ \\
+6 & Segmentation & $0 \le d < \text{limit}[s] \Rightarrow \text{base}[s] + d$, else trap \\
+7 & Page-fault EAT & $\text{EAT} = (1-p)\,t_m + p\,t_{\text{fault}}$ \quad ($p$: fault rate) \\
+7 & Direct access, record $k$ & offset $= kR$; \ block $= \lfloor kR/B \rfloor$; \ in block $= kR - \text{block}\cdot B$; check byte $kR + R - 1$ \\
+7 & Working set & $D = \sum_i \text{WSS}_i > m \Rightarrow$ thrashing \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\textbf{Powers of two:} $2^{10} = 1024$, $2^{12} = 4096$, $2^{16} = 65\,536$, $2^{20} \approx 10^{6}$. \textbf{Hex:} one hex digit $= 4$ bits; with $4$~KB pages the offset is the last three hex digits. \textbf{Time:} $1\ \text{ms} = 10^{3}\ \mu\text{s} = 10^{6}\ \text{ns}$.
+\newpage
+
+% =====================================================================
+\section{Practice Exam}
+\label{sec:practice}
+\textbf{Instructions.} $90$ minutes, $100$ points. Use the course conventions of Section~\ref{sec:exam}. Show every step of a calculation. Solutions are in Section~\ref{sec:solutions}; do not look before you have finished.
+
+\subsection*{Part A --- Multiple choice \hfill (10 $\times$ 2 = 20 points)}
+\begin{enumerate}[leftmargin=2.0em,label=A\arabic*.,itemsep=0.3em]
+  \item GM-NAA~I/O (1956) is often called the first operating system because it \quad (a) introduced time-sharing \quad (b) kept a resident monitor that ran jobs one after another \quad (c) was written in C \quad (d) had a graphical interface
+  \item In dual-mode operation, kernel mode is indicated by the mode bit value \quad (a) $0$ \quad (b) $1$ \quad (c) $2$ \quad (d) $3$
+  \item Which of the following is \emph{private} to each thread of a process? \quad (a) global variables \quad (b) heap \quad (c) stack \quad (d) open files
+  \item When the disk read requested by a waiting process completes, the process moves to the state \quad (a) running \quad (b) ready \quad (c) new \quad (d) terminated
+  \item The convoy effect is a weakness of \quad (a) FCFS \quad (b) SRTF \quad (c) Round Robin \quad (d) priority scheduling with aging
+  \item A counting semaphore initialised to $3$ protects three identical printers. How many threads can be using a printer at the same time? \quad (a) $1$ \quad (b) $2$ \quad (c) $3$ \quad (d) unlimited
+  \item Paging eliminates \quad (a) internal fragmentation \quad (b) external fragmentation \quad (c) both \quad (d) neither
+  \item Which page-replacement algorithm can show Belady's anomaly? \quad (a) FIFO \quad (b) LRU \quad (c) OPT \quad (d) none
+  \item A hard link is \quad (a) a file containing a path \quad (b) another directory entry for the same inode \quad (c) a copy of the file \quad (d) a link that dangles when the original name is deleted
+  \item \cmd{getpid()} belongs to the system-call category \quad (a) process control \quad (b) file management \quad (c) information maintenance \quad (d) protection
+\end{enumerate}
+
+\subsection*{Part B --- Short answer \hfill (4 $\times$ 5 = 20 points)}
+\begin{enumerate}[leftmargin=2.0em,label=B\arabic*.,itemsep=0.4em]
+  \item Explain the difference between a program and a process. List four kinds of information stored in a process control block.
+  \item What is saved and restored during a context switch, and why is it called overhead? Compute the overhead for a switch time $s = 5\ \mu$s and a time slice $q = 10$~ms.
+  \item State the three requirements of a solution to the critical-section problem. Explain briefly why \texttt{counter++} executed by two threads can lose an update.
+  \item List the six steps the OS performs to handle a page fault. Why must the faulting instruction be restarted?
+\end{enumerate}
+
+\subsection*{Part C --- Problems \hfill (60 points)}
+\begin{enumerate}[leftmargin=2.0em,label=C\arabic*.,itemsep=0.6em]
+  \item \pts{16} Four processes arrive at a single CPU (times in ms): P1 (arrival $0$, burst $8$), P2 ($1$, $4$), P3 ($2$, $2$), P4 ($4$, $5$). For (a) FCFS, (b) SRTF and (c) Round Robin with $q = 4$, draw the Gantt chart and compute each process's turnaround and waiting time and the average waiting time. (d) Which algorithm gives the smallest average waiting time, and why is this expected?
+  \item \pts{12} A system uses $16$-bit logical addresses and $1$~KB pages. The page table of a process is: page $0 \to$ frame $7$, $1 \to 2$, $2 \to 9$, $4 \to 5$; all other pages are invalid.
+  (a) How many bits are used for the offset and for the page number? How many pages can the address space have?
+  (b) Translate the logical addresses $2100$, $4500$, $3100$ and $1023$ (decimal).
+  (c) With $t_{\text{TLB}} = 5$~ns, $t_m = 100$~ns and a hit ratio of $0.9$, compute the effective access time. Which hit ratio gives $\text{EAT} = 110$~ns?
+  \item \pts{12} For the reference string $4, 1, 2, 4, 3, 5, 1, 3, 2, 4, 3, 5$ and $3$ initially empty frames, draw the frame tables and count the page faults for FIFO, LRU and OPT.
+  \item \pts{10} Memory has holes (size@start, in KB, address order) $250@200$, $500@600$, $150@1300$, $400@1600$, $300@2200$. Processes A $=210$, B $=380$, C $=290$, D $=450$~KB arrive in this order. Show where each is placed with first-fit, best-fit and worst-fit. Which requests cannot be satisfied, and why?
+  \item \pts{10} (a) $t_m = 150$~ns, $t_{\text{fault}} = 5$~ms and the page-fault rate is $p = 0.0004$. Compute the effective access time. What is the largest $p$ that keeps the slow-down below $20\%$?
+  (b) A program has a serial fraction $S = 0.3$. Compute its maximum speedup on $4$ and on $10$ cores, and the limit for infinitely many cores.
+\end{enumerate}
+
+% =====================================================================
+\section{Practice Exam: Worked Solutions}
+\label{sec:solutions}
+\subsection*{Part A}
+A1 (b) \quad A2 (a) \quad A3 (c) \quad A4 (b) \quad A5 (a) \quad A6 (c) \quad A7 (b) \quad A8 (a) \quad A9 (b) \quad A10 (c).
+
+Short reasons: A3 every thread has its own chain of function calls; A4 there is no arrow from waiting to running; A7 any free frame can hold any page, but the last page is usually not full; A8 LRU and OPT are stack algorithms.
+
+\subsection*{Part B}
+\textbf{B1.} A program is a passive file of instructions on disk; a process is a program in execution, an active entity with a program counter, registers, its own memory (text, data, heap, stack) and resources. One program can be the basis of many processes. PCB contents (any four): process state; PID and parent PID; program counter; CPU registers; scheduling information (priority, queue pointers); memory-management information (base/limit or page table); accounting information; I/O status (open files).
+
+\textbf{B2.} The context (program counter, registers, stack pointer, state, memory-management information) of the running process is saved into its PCB and the context of the next process is loaded from its PCB. During the switch no process does useful work, so it is pure overhead. With $q = 10\ \text{ms} = 10\,000\ \mu$s the overhead is $s/(q+s) = 5/10\,005 \approx 0.05\%$.
+
+\textbf{B3.} Mutual exclusion (at most one thread in its critical section), progress (if nobody is inside, only the threads that want to enter decide, and not forever), bounded waiting (a limit on how often others may enter before a waiting thread: no starvation). \texttt{counter++} is three instructions: load into a private register, add, store. If both threads load the same old value before either stores, the second store overwrites the first and one update is lost.
+
+\textbf{B4.} (1) the process references a page whose entry is invalid; (2) the MMU traps to the OS, which checks that the address is legal; (3) the OS locates the page on the backing store and finds a free frame (or replaces a page); (4) it reads the page from disk into the frame (meanwhile other processes run); (5) it updates the page table (frame number, bit v); (6) it restarts the instruction. The instruction did not complete when the fault occurred, so it must be executed again from the beginning, this time with the page in memory.
+
+\subsection*{Part C}
+\textbf{C1.} \textit{(Generated tables; conventions: switch time $0$, ties by arrival.)}
+
+\textbf{(a) FCFS}\\[0.2em]
+\gen{pr_gantt_fcfs}\\[0.3em]
+{\small\gen{pr_sched_fcfs}}
+
+\textbf{(b) SRTF}\\[0.2em]
+\gen{pr_gantt_srtf}\\[0.3em]
+$t=1$: P2 needs $4 <$ P1's remaining $7$: preempt. $t=2$: P3 needs $2 <$ P2's remaining $3$: preempt. $t=4$: P3 done; P4 arrives needing $5$; remaining P1 $7$, P2 $3$: P2 runs to $7$, then P4 ($5 < 7$) to $12$, then P1 to $19$.\\
+{\small\gen{pr_sched_srtf}}
+
+\Needspace{12\baselineskip}
+\textbf{(c) Round Robin, $q = 4$}\\[0.2em]
+\gen{pr_gantt_rr4}\\[0.3em]
+$t=4$: queue P2, P3, then P4 (arrives exactly as P1's quantum expires), then P1. P2 runs $4$--$8$ (done), P3 $8$--$10$ (done), P4 $10$--$14$ ($1$ left), P1 $14$--$18$ (done), P4 $18$--$19$.\\
+{\small\gen{pr_sched_rr4}}
+
+\textbf{(d)} SRTF: average waiting time $4$~ms, against $6.75$ (FCFS) and $7.25$~ms (RR). SRTF always gives the minimum average waiting time when context switches are free, because running a shorter job first never increases the total waiting time (exchange argument). Its price: it needs the burst lengths in advance, and the long job P1 waits $11$~ms.
+
+\textit{Rubric:} each algorithm $5$ points (Gantt chart $2$, per-process times $2$, average $1$); (d) $1$ point.
+
+\textbf{C2.} (a) $1\ \text{KB} = 2^{10}$~B, so the offset has $n = 10$ bits and the page number $16 - 10 = 6$ bits: $2^{6} = 64$ pages.
+(b) $p = \lfloor a/1024 \rfloor$, $d = a - 1024\,p$:
+\begin{itemize}
+  \item $2100$: $p = 2$, $d = 2100 - 2048 = 52$; frame $9$: $9 \times 1024 + 52 = 9268$.
+  \item $4500$: $p = 4$, $d = 4500 - 4096 = 404$; frame $5$: $5 \times 1024 + 404 = 5524$.
+  \item $3100$: $p = 3$ ($d = 28$): page $3$ is invalid $\Rightarrow$ \textbf{trap}.
+  \item $1023$: $p = 0$, $d = 1023$; frame $7$: $7 \times 1024 + 1023 = 8191$ (the last byte of frame $7$).
+\end{itemize}
+(c) $\text{EAT} = 0.9 \times 105 + 0.1 \times 205 = 94.5 + 20.5 = 115$~ns $= 5 + (2 - 0.9)\times100$. For $110$~ns: $5 + (2-\alpha)\,100 = 110 \Rightarrow 2 - \alpha = 1.05 \Rightarrow \alpha = 0.95$.
+\textit{Rubric:} (a) $3$, (b) $1.5$ per address, (c) $3$.
+
+\textbf{C3.} \textit{(Generated tables.)}
+\begin{center}
+\begin{minipage}{\linewidth}\centering\textbf{FIFO: 10 faults}\\[0.2em]\gen{pr_frames_FIFO}\end{minipage}\\[0.8em]
+\begin{minipage}{\linewidth}\centering\textbf{LRU: 9 faults}\\[0.2em]\gen{pr_frames_LRU}\end{minipage}\\[0.8em]
+\begin{minipage}{\linewidth}\centering\textbf{OPT: 7 faults}\\[0.2em]\gen{pr_frames_OPT}\end{minipage}
+\end{center}
+Check: the string has $5$ distinct pages, so at least $5$ faults; $\text{OPT} \le \text{LRU} \le \text{FIFO}$ here. \textit{Rubric:} $4$ points per algorithm ($3$ for the table, $1$ for the count).
+
+\Needspace{12\baselineskip}
+\textbf{C4.} \textit{(Generated table.)}
+\begin{center}\small\gen{pr_fits}\end{center}
+First-fit: D ($450$) must wait although $720$~KB are free --- the largest hole is $300$~KB. Worst-fit: D must wait as well ($720$~KB free, largest hole $290$~KB). Best-fit places all four, leaving $270$~KB in small holes. This is external fragmentation: enough free memory in total, but not contiguous. \textit{Rubric:} $3$ points per strategy, $1$ for the explanation.
+
+\textbf{C5.} (a) $t_{\text{fault}} = 5\ \text{ms} = 5\,000\,000$~ns:
+\[
+\text{EAT} = 0.9996 \times 150 + 0.0004 \times 5\,000\,000 = 149.94 + 2000 = 2149.94\ \text{ns} \approx 14.3\,t_m .
+\]
+Slow-down below $20\%$: $\text{EAT} < 180$~ns, so $150 + p\,(5\,000\,000 - 150) < 180 \Rightarrow p < 30/4\,999\,850 \approx 6.0\times10^{-6}$, at most one fault per about $166\,700$ accesses.
+
+(b) $N = 4$: $1/(0.3 + 0.7/4) = 1/0.475 \approx 2.11$; $N = 10$: $1/(0.3 + 0.07) = 1/0.37 \approx 2.70$; limit $1/0.3 \approx 3.33$.
+\textit{Rubric:} (a) $6$ ($3$ EAT, $3$ bound), (b) $4$.
+
+% =====================================================================
+\section{How the Numbers Were Checked}
+\label{sec:check}
+Every number in this guide, on the slides and in the sample paper was computed, not eyeballed. The \texttt{code/} folder contains:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily}l X@{}}
+\toprule
+\textrm{\textbf{File}} & \textbf{Purpose} \\
+\midrule
+osim.py & small simulators with exactly the course conventions: FCFS, SJF, SRTF, Priority, RR; FIFO, LRU, OPT; first/best/worst-fit; the formulas of Weeks~1--7 \\
+review\_problems.py & the slides' worked problems and the examples of Sections~\ref{sec:w1}--\ref{sec:w7} (output: \texttt{out\_review.txt}) \\
+practice\_exam.py & the practice exam of Section~\ref{sec:practice} (output: \texttt{out\_practice.txt}) \\
+sample\_exam.py & the separate sample paper and its answer key (output: \texttt{out\_sample.txt}) \\
+gen\_tables.py & writes the Gantt charts and tables marked ``generated'' (\texttt{tex/*.tex}) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+For example, the SRTF part of Problem~2, as printed by \cmd{python3 review\_problems.py}:
+\lstinputlisting[style=term,linerange={46-54}]{../code/out_review.txt}
+Change the job sets, reference strings or holes in the scripts to generate your own practice problems, and check your hand calculations against them.
+
+% =====================================================================
+\section{Looking Ahead: Week 9}
+After the midterm the course becomes hands-on. From Week~9 to Week~14 we work in the Linux shell every week, and many of this half's ideas return as commands.
+\begin{itemize}
+  \item \textbf{Week 9: Linux Shell Basics \& Filesystem Navigation.} Getting Linux (lab PCs, WSL with \cmd{wsl --install}, an Ubuntu VM); terminal versus shell versus kernel (the shell is a system program, Week~2); first commands; \cmd{pwd}, \cmd{ls}, \cmd{cd}; absolute and relative paths in the directory tree of Week~7; getting help.
+  \item Week~10: file operations and links (inodes again); Week~11: permissions; Week~12: redirection and pipes; Week~13: processes and job control (\cmd{ps}, signals; Weeks~3 and~5); Week~14: shell scripting; Week~15: final exam.
+\end{itemize}
+Before Week~9, make sure you can open a Linux terminal on a lab PC, in WSL or in a virtual machine.
+
+\subsection*{Further reading (optional)}
+\begin{itemize}
+  \item A.\ Silberschatz, P.\,B.\ Galvin and G.\ Gagne, \emph{Operating System Concepts}, 10th ed., Wiley: Chapters~1--2 (introduction, structures), 3 (processes), 4 (threads), 5 (CPU scheduling), 6 (synchronisation tools), 9 (main memory), 10 (virtual memory), 13 (file-system interface).
+  \item R.\,H.\ and A.\,C.\ Arpaci-Dusseau, \emph{Operating Systems: Three Easy Pieces}, chapter PDFs:
+  \begin{itemize}[itemsep=0em]
+    \item Processes: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf}
+    \item Scheduling: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf}
+    \item Concurrency and threads: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/threads-intro.pdf}
+    \item Paging: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/vm-paging.pdf}
+    \item TLBs: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf}
+    \item Swapping policies: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/vm-beyondphys-policy.pdf}
+    \item Files and directories: \url{https://pages.cs.wisc.edu/~remzi/OSTEP/file-intro.pdf}
+  \end{itemize}
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,664 @@
+% =====================================================================
+%  MCMP117 -- Fundamentals of Operating Systems
+%  Week 15 Course Notes: Final Exam Review & Practice
+%  Compile with XeLaTeX (twice):  xelatex MCMP117_Week15_Notes.tex
+%  Needs ./figures/ and the ../code/ folder.
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+\newcommand{\weeknum}{15}
+% ---------- Page & fonts ---------------------------------------------
+\usepackage[a4paper,margin=2.3cm,headheight=15pt]{geometry}
+\usepackage{fontspec}
+\IfFontExistsTF{Calibri}{\setmainfont{Calibri}}{\setmainfont{Carlito}}
+\IfFontExistsTF{Cambria}{\newfontfamily\headfont{Cambria}}{\newfontfamily\headfont{Caladea}}
+\IfFontExistsTF{Consolas}{\setmonofont[Scale=0.95]{Consolas}}{\setmonofont[Scale=0.88]{DejaVu Sans Mono}}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\linespread{1.12}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+
+% ---------- Colours (course design system) ----------------------------
+\usepackage{xcolor}
+\definecolor{dark}{HTML}{212121}
+\definecolor{charcoal}{HTML}{36454F}
+\definecolor{slate}{HTML}{50808E}
+\definecolor{mint}{HTML}{02C39A}
+\definecolor{mintdeep}{HTML}{028090}
+\definecolor{light}{HTML}{F2F2F2}
+\definecolor{muted}{HTML}{6B7679}
+
+% ---------- Packages ---------------------------------------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{needspace}
+\graphicspath{{figures/}}
+\usepackage[font=small,labelfont={bf,color=mintdeep},justification=centering]{caption}
+\usepackage{booktabs,longtable,array,tabularx}
+\usepackage{enumitem}
+\setlist{itemsep=0.25em,topsep=0.3em}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{xurl}
+\usepackage[colorlinks=true,linkcolor=mintdeep,urlcolor=mintdeep,citecolor=mintdeep]{hyperref}
+
+% ---------- Headings ----------------------------------------------------
+\titleformat{\section}{\headfont\Large\bfseries\color{charcoal}}{\color{mint}\thesection}{0.7em}{}
+\titleformat{\subsection}{\headfont\large\bfseries\color{charcoal}}{\color{mintdeep}\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\headfont\normalsize\bfseries\color{mintdeep}}{}{0em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.6em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.4em}
+
+% ---------- Header / footer -----------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}MCMP117 --- Fundamentals of Operating Systems}
+\fancyhead[R]{\small\color{muted}Week \weeknum{} Notes}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ---------- Boxes ---------------------------------------------------------
+\newtcolorbox{keyidea}[1][Key idea]{enhanced,breakable,colback=charcoal,colframe=charcoal,
+  coltext=white,fonttitle=\headfont\bfseries\color{mint},title={#1},
+  attach title to upper={\par\smallskip},boxrule=0pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt}
+\newtcolorbox{example}[1][Worked example]{enhanced,colback=light,colframe=light,
+  fonttitle=\headfont\bfseries\color{mintdeep},title={#1},attach title to upper={\par\smallskip},
+  boxrule=0pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt}
+\newtcolorbox{tryit}[1][Try it yourself]{enhanced,breakable,colback=white,colframe=mint,
+  fonttitle=\headfont\bfseries\color{mintdeep},title={#1},attach title to upper={\par\smallskip},
+  boxrule=0.8pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt}
+\newtcolorbox{histnote}[1][Historical note]{enhanced,breakable,colback=white,colframe=slate!40,
+  fonttitle=\headfont\bfseries\color{slate},title={#1},attach title to upper={\par\smallskip},
+  boxrule=0.5pt,arc=3pt,left=10pt,right=10pt,top=8pt,bottom=8pt,fontupper=\small}
+
+% Photo helper: fits image inside a box, never distorted (keepaspectratio)
+\newcommand{\photo}[3]{\includegraphics[width=#1,height=#2,keepaspectratio]{#3}}
+
+\newcommand{\term}[1]{\textbf{\color{mintdeep}#1}}
+\newcommand{\cmd}[1]{\texttt{#1}}
+
+
+% ---------- Code listings ----------------------------------------------------
+\usepackage{listings}
+\lstdefinestyle{course}{
+  basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  backgroundcolor=\color{dark}, rulecolor=\color{dark}, frame=single, framesep=6pt,
+  xleftmargin=8pt, xrightmargin=8pt, aboveskip=0.8em, belowskip=0.6em,
+  basicstyle=\ttfamily\small\color{light},
+  keywordstyle=\color{mint}\bfseries, commentstyle=\color{white!60}\itshape,
+  stringstyle=\color{orange!70!yellow}, numberstyle=\tiny\color{muted},
+  numbers=left, numbersep=10pt, showstringspaces=false, breaklines=true,
+  tabsize=4, upquote=true}
+\lstdefinestyle{term}{style=course, numbers=none, keywordstyle=\color{light},
+  commentstyle=\color{white!60}, stringstyle=\color{light}}
+\lstset{style=course,language=C}
+\usepackage{textcomp}
+
+\begin{document}
+% ============================ Week 15 body ============================
+% Final-exam study guide. Theory numbers: code/theory_check.py (out_theory_check.txt);
+% terminal sessions: code/out_*.txt, captured by code/capture.sh as an ordinary user.
+\setlength{\emergencystretch}{3em}
+\lstdefinestyle{term}{style=course, numbers=none, keywordstyle=\color{light},
+  commentstyle=\color{white!60}, stringstyle=\color{light}, basicstyle=\ttfamily\footnotesize\color{light}}
+\lstdefinestyle{sh}{style=course,language=bash,basicstyle=\ttfamily\footnotesize\color{light},
+  morekeywords={elif,then,fi,do,done,in,exit,echo}}
+% Gantt-chart helpers (colours match the slides and Week 5)
+\definecolor{amber}{HTML}{C98A1B}
+\colorlet{colP1}{mint}\colorlet{txtP1}{dark}
+\colorlet{colP2}{slate}\colorlet{txtP2}{white}
+\colorlet{colP3}{amber}\colorlet{txtP3}{white}
+\colorlet{colP4}{charcoal}\colorlet{txtP4}{white}
+% \gantt{unit in cm per ms}{P/start/end, ...}
+\newcommand{\gantt}[2]{%
+\begin{tikzpicture}[x=#1cm,y=1cm]
+\foreach \p/\a/\b in {#2} {
+  \fill[col\p] (\a,0) rectangle (\b,0.62);
+  \draw[white,line width=1.2pt] (\a,0) -- (\a,0.62);
+  \node[font=\small\bfseries,text=txt\p] at ({(\a+\b)/2},0.31) {\p};
+  \draw[muted] (\a,0) -- (\a,-0.1) node[below,font=\scriptsize,text=muted,inner sep=1.5pt] {\a};
+  \draw[muted] (\b,0) -- (\b,-0.1) node[below,font=\scriptsize,text=muted,inner sep=1.5pt] {\b};
+}
+\end{tikzpicture}}
+% frame tables: newly loaded page and fault mark
+\newcommand{\nw}[1]{\textbf{\color{mintdeep}#1}}
+\newcommand{\F}{\textcolor{red!70!black}{\textbf{F}}}
+\newcommand{\pts}[1]{\hfill\textcolor{mintdeep}{\textbf{[#1~pt]}}}
+
+\thispagestyle{empty}
+\begin{tcolorbox}[enhanced,colback=dark,colframe=dark,arc=0pt,boxrule=0pt,
+  left=18pt,right=18pt,top=20pt,bottom=20pt,coltext=white]
+{\small\color{mint}\textsc{MCMP117 \,·\, Week 15 \,·\, Study Guide}}\par\medskip
+{\headfont\fontsize{26}{30}\selectfont\bfseries Fundamentals of Operating Systems}\par\medskip
+{\large Final Exam Review \& Practice}\par\smallskip
+{\small\itshape\color{white!70} Fifteen weeks, one exam: from the first batch systems to your own shell scripts.}
+\end{tcolorbox}
+
+\vspace{0.4em}
+{\small
+\textbf{Instructor:} Asst.\ Prof.\ Dr.\ (Ph.D.) Hasan Oğuz\\
+Head of the Electronical Communication Technology Programme, Vocational School\\
+Istanbul Okan University\par}
+
+\vspace{0.8em}
+\begin{keyidea}[What you should be able to do for the final exam]
+\begin{enumerate}[leftmargin=1.4em]
+  \item Explain the central ideas of Weeks~1--7 with the course's own terms: OS views and goals, dual mode, system calls, processes and threads, scheduling, synchronisation, memory management, virtual memory and file systems.
+  \item Solve the standard numerical problems: utilisation, Amdahl's law, Gantt charts with waiting and turnaround times, address translation, EAT with a TLB and with page faults, page-replacement frame tables, block arithmetic.
+  \item Write, from memory, the Linux commands of Weeks~9--13: navigation, file operations, permissions, redirection, process and job control.
+  \item Build one-line pipelines that answer questions about text data (logs, CSV files).
+  \item Write a short Bash script with an argument check, a loop, a test, arithmetic and a correct exit status.
+\end{enumerate}
+\end{keyidea}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+% =====================================================================
+\section{How to Use This Study Guide}
+
+This guide covers the \emph{whole} course. Section~\ref{sec:theory} recaps the theory weeks~1--7 compactly; it uses exactly the terminology, notation and conventions of the weekly notes. (The Week~8 midterm study guide treats the same weeks at greater length and is still valid.) Section~\ref{sec:practical} recaps the Linux weeks~9--14 with real terminal output. Section~\ref{sec:sheet} is a one-page formula and command sheet. Section~\ref{sec:lecture} repeats the worked problems from the lecture slides with full solutions, and Section~\ref{sec:mistakes} lists common mistakes and an exam strategy. Then comes a complete \textbf{Practice Final} (Section~\ref{sec:pf}) with worked solutions (Section~\ref{sec:pfsol}). The sample paper handed out separately has \emph{different} questions; use it as a timed rehearsal after you have worked through this guide.
+
+\subsection{Exam logistics}
+Items in square brackets are not yet official; the announcement on the course Telegram channel is what counts.
+\begin{itemize}
+  \item \textbf{Date, time, room:} [to be announced on the course Telegram channel].
+  \item \textbf{Duration:} [90] minutes. \textbf{Total:} 100 points in six parts (A--F).
+  \item \textbf{Bring:} student ID, pens; [a basic, non-programmable calculator --- allowed: to be confirmed].
+  \item \textbf{Rules:} closed book [to be confirmed]; [a formula sheet is / is not provided --- to be confirmed]; phones off.
+  \item \textbf{Weight:} [the final counts \_\_\,\% of the course grade --- see the syllabus].
+\end{itemize}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}c>{\raggedright\arraybackslash}Xll@{}}
+\toprule
+\textbf{Part} & \textbf{Question type} & \textbf{Weeks} & \textbf{Points*} \\
+\midrule
+A & Multiple choice: concepts and commands & 1--7, 9--14 & 20 \\
+B & Short answers: explain, compare, list & 1--7 & 12 \\
+C & Numerical problems & 4--7 (+1, 3) & 36 \\
+D & Write the command & 9--13 & 14 \\
+E & Write the pipeline & 12 & 9 \\
+F & Write a short Bash script & 14 & 9 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+{\small *Point split of the sample paper and of the Practice Final below [the real paper may differ slightly --- to be confirmed].}
+
+% =====================================================================
+\section{Theory Recap: Weeks 1--7}
+\label{sec:theory}
+
+For each week: a short summary, the formulas in a box, and the typical exam questions. If a line here is unfamiliar, go back to that week's notes and redo its review questions.
+
+\subsection{Week 1: Introduction and history}
+A computer follows instructions (input $\to$ process $\to$ output, program stored in memory); a first working definition of the OS is \emph{the program that starts first and manages everything else}. The history runs from no software (ENIAC, 1945) via batch processing with a resident monitor (GM-NAA I/O, 1956), one OS for a family of machines (IBM System/360, 1964), multiprogramming and time-sharing (CTSS 1961, Multics), UNIX (1969) and the personal computer, to Linux (1991), phones (iPhone 2007, Android 2008) and the cloud. Each step was driven by the cost of an idle processor.
+\begin{example}[Week 1 formulas]
+\[
+U = \frac{t_{\text{run}}}{t_{\text{run}} + t_{\text{setup}}}, \qquad U(n) = 1 - p^{\,n}\quad(p = \text{fraction of time a job waits for I/O}).
+\]
+\end{example}
+\textit{Typical questions:} put milestones in order; why batch, why multiprogramming, why time-sharing; compute $U$, e.g.\ $t_{\text{run}} = 2$~min, $t_{\text{setup}} = 3$~min gives $U = 2/5 = 0.4$; $p = 0.6$, $n=3$ gives $U(3) = 1 - 0.216 = 0.784$.
+
+\subsection{Week 2: Definitions, goals, components, structures}
+Two classic views: the OS as an \term{extended machine} (abstraction, top-down) and as a \term{resource manager} (time and space multiplexing, bottom-up); its always-resident core is the \term{kernel}. Design goals: convenience, efficiency, ability to evolve. A computer system has four components: hardware, OS, application programs, users. Devices signal the CPU with \term{interrupts}. The storage hierarchy runs from registers ($\approx 0.3$~ns) through cache, RAM ($\approx 100$~ns) and SSD to HDD ($\approx 5$~ms); registers, cache and RAM are volatile. \term{Dual-mode operation}: mode bit $0$ = kernel mode (all instructions allowed), $1$ = user mode (privileged instructions forbidden); a \term{system call} switches to kernel mode and costs far more than a function call. Structures: simple (MS-DOS), monolithic (UNIX, Linux), layered (THE), microkernel (MINIX~3, QNX, seL4), modular (loadable kernel modules), hybrid (Windows, macOS, Android).
+\textit{Typical questions:} the two views; why protection needs hardware; compare monolithic and microkernel (speed versus reliability).
+
+\subsection{Week 3: OS services, system calls, processes}
+Services help the user (user interface, program execution, I/O, file systems, communication, error detection) and the system (resource allocation, accounting, protection and security). A program calls an API function; a thin library wrapper puts the system-call \emph{number} in a register (\texttt{rax} on x86-64 Linux) and executes the trap; the kernel uses the number as an index into the \term{system-call table}. Parameters are passed in registers, in a memory block, or on the stack.
+
+A \term{process} is a program in execution, with text, data, bss, heap and stack. It moves through the states \emph{new, ready, running, waiting, terminated}; transitions: admitted, scheduler dispatch, interrupt, I/O or event wait, I/O or event completion, exit. A waiting process can never go directly to running. The \term{PCB} stores state, program counter, registers, scheduling, memory and file information. A \term{context switch} saves one PCB and loads another and is pure overhead. \cmd{fork()} creates a copy, \cmd{exec()} loads a new program, \cmd{wait()} waits for a child.
+\begin{example}[Week 3 formulas]
+\[
+\text{switch overhead} = \frac{s}{q + s}, \qquad n \text{ forks in a loop} \Rightarrow 2^{n} \text{ processes } (2^{n}-1 \text{ created by } \cmd{fork()}).
+\]
+With $s = 0.1$~ms and $q = 4$~ms: $0.1/4.1 = 2.44\,\%$ of the CPU time is spent switching.
+\end{example}
+
+\subsection{Week 4: Threads and CPU-scheduling basics}
+A \term{thread} has its own thread ID, program counter, registers and stack; the threads of a process share code, data, heap and open files. Benefits: responsiveness, resource sharing, economy, scalability. Concurrency means several tasks make progress; parallelism needs several cores. Multithreading models: many-to-one, one-to-one (Linux, Windows), many-to-many. Processes alternate CPU and I/O bursts; the short-term scheduler picks from the ready queue, the dispatcher performs the switch; preemptive schedulers may interrupt a running process.
+\begin{example}[Week 4 formulas]
+\begin{align*}
+\text{speedup}(N) &\le \frac{1}{S + \dfrac{1-S}{N}}, \qquad \lim_{N\to\infty} = \frac{1}{S};\\
+T_{\text{turnaround}} &= T_{\text{completion}} - T_{\text{arrival}},\qquad
+T_{\text{waiting}} = T_{\text{turnaround}} - T_{\text{burst}},\\
+T_{\text{response}} &= T_{\text{first run}} - T_{\text{arrival}};\\
+\text{CPU utilisation} &= \frac{B}{T}, \qquad \text{throughput} = \frac{n}{T}.
+\end{align*}
+\end{example}
+\textit{Typical questions:} what threads share; compare the models; Amdahl ($S = 0.2$, $N = 4$: $1/(0.2+0.2) = 2.5$, never more than $5$); the criteria (maximise utilisation and throughput, minimise turnaround, waiting and response time).
+
+\subsection{Week 5: Scheduling algorithms and synchronisation}
+\textbf{FCFS} (convoy effect), \textbf{SJF} (optimal average waiting time when all jobs are ready together), \textbf{SRTF} (its preemptive version), \textbf{Priority} (smaller number = higher priority; starvation, cured by \term{aging}), \textbf{Round Robin} (quantum $q$; wait between turns at most $(n-1)q$; $q$ too large $\to$ FCFS, too small $\to$ switching overhead).
+
+\begin{keyidea}[Scheduling conventions of this course --- state them in the exam]
+Context-switch time is $0$; ties are broken by arrival time, then by process name; a \emph{smaller} priority number means a \emph{higher} priority; in Round Robin, a process that arrives at the same instant as a quantum expires enters the ready queue \emph{before} the preempted process.
+\end{keyidea}
+
+A \term{race condition} arises when concurrent threads access shared data, at least one writes, and the result depends on timing (\texttt{counter++} is load--add--store). A solution to the \term{critical-section problem} must guarantee \emph{mutual exclusion}, \emph{progress} and \emph{bounded waiting}. Mutex locks (\texttt{acquire}/\texttt{release}) and semaphores (\texttt{wait(S)}: wait while $S \le 0$, then $S{-}{-}$; \texttt{signal(S)}: $S{+}{+}$; POSIX \cmd{sem\_wait}/\cmd{sem\_post}) are built on atomic hardware instructions. The bounded buffer uses \texttt{empty}, \texttt{full} and \texttt{mutex}; locks taken in inconsistent orders can deadlock.
+\begin{example}[Week 5 formula]
+\[
+\tau_{n+1} = \alpha\, t_n + (1-\alpha)\,\tau_n, \qquad 0 \le \alpha \le 1.
+\]
+\end{example}
+
+\subsection{Week 6: Memory management}
+Address binding at compile, load or execution time; modern systems bind at execution time, so \term{logical} and \term{physical} addresses differ and the \term{MMU} translates. Base and limit: if $0 \le a < \text{limit}$ then $a_{\text{phys}} = \text{base} + a$, otherwise trap. Contiguous allocation with first-fit (first hole big enough), best-fit (smallest big enough), worst-fit (largest) suffers from \term{external fragmentation} (50-percent rule: up to one third of memory lost); compaction helps but is expensive. \term{Paging} splits logical memory into pages and physical memory into equal frames: no external fragmentation, only \term{internal fragmentation} (half a page per process on average). A \term{TLB} caches page-table entries. \term{Segmentation} translates $\langle s, d\rangle$ with a base and a limit per segment.
+\begin{example}[Week 6 formulas]
+With pages of $2^{n}$ bytes:
+\[
+p = \left\lfloor \frac{a}{2^{n}} \right\rfloor,\qquad d = a \bmod 2^{n},\qquad a_{\text{phys}} = f \cdot 2^{n} + d;
+\]
+\[
+\text{EAT} = \alpha\,(t_{\text{TLB}} + t_m) + (1-\alpha)\,(t_{\text{TLB}} + 2t_m) = t_{\text{TLB}} + (2-\alpha)\,t_m \quad\text{(our convention)}.
+\]
+Page-table size = number of pages $\times$ entry size, e.g.\ $2^{20} \times 4$~B $= 4$~MB for $32$-bit addresses and $4$~KB pages.
+\end{example}
+
+\subsection{Week 7: Virtual memory and file systems}
+\term{Demand paging} loads a page on first use; the valid--invalid bit marks pages that are not in memory; touching one causes a \term{page fault}: trap, locate on disk, read into a free frame, update the table, restart the instruction. Copy-on-write makes \cmd{fork()} cheap. When no frame is free, a replacement algorithm chooses a victim: \textbf{FIFO} (oldest page; Belady's anomaly possible), \textbf{OPT} (used farthest in the future; optimal but needs the future), \textbf{LRU} (least recently used; approximated by the clock/second-chance algorithm). \term{Thrashing}: processes have fewer frames than their working sets and spend their time paging. Files are named data with attributes (Linux: the inode); access is sequential, direct or indexed. Directories: single-level, two-level, tree, acyclic graph (hard and symbolic links), general graph.
+\begin{example}[Week 7 formulas]
+\[
+\text{EAT} = (1-p)\,t_m + p\,t_{\text{fault}}; \qquad
+\text{byte} = r \times \text{record size},\quad \text{block} = \left\lfloor \frac{\text{byte}}{B} \right\rfloor,\quad \text{offset} = \text{byte} \bmod B.
+\]
+\end{example}
+
+% =====================================================================
+\section{Practical Recap: Weeks 9--14}
+\label{sec:practical}
+
+\paragraph{About the outputs.} Every terminal session in this section is real output, captured as an ordinary user in a freshly created \texttt{\textasciitilde/lab} folder (run \cmd{bash mcmp117\_lab\_setup.sh} first; the script is in \texttt{code/}). The commands are in \texttt{code/demo\_recap.sh}, \texttt{code/demo\_worked.sh} and \texttt{code/answers\_*.sh}, the outputs in \texttt{code/out\_*.txt}. On your machine, dates, sizes, PIDs and user names will differ, and the order of \cmd{ls} and \cmd{sort} output can depend on the locale; we used \cmd{LC\_ALL=C.UTF-8}.
+
+\subsection{Week 9: Shell basics and navigation}
+The \emph{terminal} is the window, the \emph{shell} (bash) is a system program that reads commands, and the kernel does the work through system calls (Week~2). A command has the form \texttt{command -options arguments}. \cmd{pwd} prints the current directory, \cmd{ls} lists (\cmd{-l} long, \cmd{-a} hidden, \cmd{-h} human-readable sizes, \cmd{-R} recursive), \cmd{cd} changes directory. Absolute paths start at \texttt{/}; relative paths start at the current directory; \texttt{\textasciitilde} is home, \texttt{.} here, \texttt{..} the parent, \cmd{cd -} goes back. Important directories (FHS): \texttt{/home}, \texttt{/etc}, \texttt{/bin}, \texttt{/usr}, \texttt{/var}, \texttt{/tmp}, \texttt{/dev}, \texttt{/proc}. Help: \cmd{man} (q quits, \texttt{/word} searches), \cmd{--help}. Tab completion, \cmd{history}, \cmd{!!}, Ctrl+C, Ctrl+L.
+\Needspace{14\baselineskip}
+\lstinputlisting[style=term]{../code/out_w09.txt}
+
+\subsection{Week 10: File and directory operations}
+\cmd{mkdir -p}, \cmd{touch}, \cmd{cp} (\cmd{-r -i -v}), \cmd{mv} (rename or move), \cmd{rm} (\cmd{-r -i}; \textbf{there is no recycle bin}: check the path before you press Enter), \cmd{rmdir}. Wildcards \texttt{*} (any string), \texttt{?} (exactly one character), \texttt{[abc]}, \texttt{[0-9]}, and brace expansion \texttt{\{a,b\}}, \texttt{\{1..5\}} are expanded \emph{by the shell} before the command runs. Quote names with spaces. Viewing: \cmd{cat}, \cmd{less}, \cmd{head}, \cmd{tail -n}/\cmd{-f}, \cmd{wc}, \cmd{file}, \cmd{stat}; sizes \cmd{du -sh}, \cmd{df -h}; links \cmd{ln} (hard) and \cmd{ln -s} (symbolic), inode numbers with \cmd{ls -i} (Week~7).
+\Needspace{20\baselineskip}
+\lstinputlisting[style=term]{../code/out_w10.txt}
+
+\subsection{Week 11: Permissions, ownership and users}
+The mode string \texttt{-rwxr-x---} has a type character and three triplets for owner (u), group (g) and others (o). For files r/w/x mean read/write/execute; for directories r lists, w creates and deletes entries, x enters (\cmd{cd}). Octal: $r = 4$, $w = 2$, $x = 1$, so \texttt{rwxr-x---} $= 750$ ($7 = 4+2+1$, $5 = 4+1$, $0$). \cmd{chmod} symbolic (\cmd{u+x}, \cmd{go-w}, \cmd{a=r}) or octal. The \term{umask} \emph{removes} bits from the requested mode ($666$ for files, $777$ for directories): new mode $=$ requested mode AND NOT umask (bitwise, not a subtraction); umask $002$ gives $664$/$775$, umask $027$ gives $640$/$750$. \cmd{chown}/\cmd{chgrp} need root; \cmd{sudo} runs one command as root --- think before you type it. Never ``fix'' a permission problem with \cmd{chmod 777}: it lets every user change the file.
+\Needspace{16\baselineskip}
+\lstinputlisting[style=term]{../code/out_w11.txt}
+
+\subsection{Week 12: Text processing, redirection and pipes}
+Every process starts with three open file descriptors: $0$ stdin, $1$ stdout, $2$ stderr (Weeks~2--3: \cmd{write(1, \dots)}). Redirection: \cmd{>} overwrite, \cmd{>>} append, \cmd{<} input, \cmd{2>} errors, \cmd{2>\&1} errors to where stdout goes, \cmd{\&>} both, \cmd{/dev/null} discards. A pipe \cmd{a | b} connects stdout of \texttt{a} to stdin of \texttt{b}; the shell creates both processes (Week~3). Filters: \cmd{grep} (\cmd{-i -n -v -c -r -w}; regex \texttt{\^{} \$ . [ ] *}), \cmd{sort} (\cmd{-n -r -t -k}), \cmd{uniq} (\cmd{-c}; needs sorted input), \cmd{cut} (\cmd{-d -f}), \cmd{wc}, \cmd{tr}, \cmd{head}, \cmd{tail}, \cmd{tee}, \cmd{find} (\cmd{-name -type -size -mtime}), \cmd{xargs}.
+\Needspace{19\baselineskip}
+\lstinputlisting[style=term]{../code/out_w12.txt}
+In \texttt{logs/access.log} the space-separated fields are: $1$ IP address, $4$--$5$ date and time zone, $6$--$8$ request (method, page, protocol), $9$ status code, $10$ bytes. In \texttt{data/students.csv} (header \texttt{id,name,department,midterm,final}) the comma-separated fields are $1$--$5$.
+
+\subsection{Week 13: Processes and job control}
+\cmd{ps}, \cmd{ps -ef}, \cmd{ps aux} (columns PID, PPID, STAT, \%CPU, \%MEM), \cmd{pstree}, \cmd{top}/\cmd{htop}, \texttt{/proc/<pid>/status}. STAT shows the Week~3 states: \texttt{R} running or ready, \texttt{S} sleeping (waiting), \texttt{T} stopped, \texttt{Z} zombie. Jobs: \cmd{cmd \&} runs in the background, \cmd{jobs} lists, \cmd{fg}/\cmd{bg} move, Ctrl+Z stops (SIGTSTP), Ctrl+C interrupts (SIGINT). Signals: \cmd{kill PID} sends SIGTERM ($15$, ``please stop''), \cmd{kill -9} SIGKILL (cannot be caught or ignored --- the process gets no chance to clean up: use it only when SIGTERM fails), SIGSTOP ($19$) and SIGCONT ($18$); \cmd{pkill}, \cmd{killall}. \texttt{\$\$} is the PID of the shell, \texttt{\$!} of the last background job. \cmd{nice}/\cmd{renice}: values $-20$ (highest priority) to $19$; only root may lower them (Week~5).
+\Needspace{20\baselineskip}
+\lstinputlisting[style=term]{../code/out_w13.txt}
+The first \cmd{ps} line is the shell that ran our commands (here a script; in your terminal you will see \texttt{bash}). In an interactive terminal the shell also reports \texttt{[1]+ Terminated sleep 600} at the next prompt.
+
+\subsection{Week 14: Shell scripting}
+A script starts with the shebang \texttt{\#!/bin/bash}; run it with \cmd{chmod +x s.sh; ./s.sh} or \cmd{bash s.sh}; debug with \cmd{bash -x}. Variables: \texttt{x=5} (no spaces around \texttt{=}), \texttt{"\$x"} expands, \texttt{'\$x'} does not; command substitution \texttt{\$(cmd)}; integer arithmetic \texttt{\$((x + 1))}. Positional parameters \texttt{\$0 \$1 \$\# \$@}; \texttt{\$?} is the exit status of the last command, \cmd{exit n} sets the script's own. Tests \texttt{[ \dots\ ]} (spaces inside the brackets!): numbers \texttt{-eq -ne -lt -le -gt -ge}, strings \texttt{= != -z}, files \texttt{-f -d -e}. Control: \texttt{if/elif/else/fi}, \texttt{for \dots\ in \dots; do \dots; done}, \texttt{while}, functions. Week~14 built \texttt{backup.sh} and \texttt{report.sh}.
+\Needspace{17\baselineskip}
+\lstinputlisting[style=term]{../code/out_w14.txt}
+
+% =====================================================================
+\section{Formula and Command Sheet}
+\label{sec:sheet}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Week} & \textbf{Quantity} & \textbf{Formula} \\
+\midrule
+1 & Batch utilisation & $U = t_{\text{run}}/(t_{\text{run}} + t_{\text{setup}})$ \\
+1 & Multiprogramming & $U(n) = 1 - p^{n}$ \\
+3 & Switch overhead; forks & $s/(q+s)$; \ $n$ forks in a loop $\Rightarrow 2^{n}$ processes \\
+4 & Amdahl's law & $\text{speedup} \le 1/\bigl(S + (1-S)/N\bigr)$, limit $1/S$ \\
+4 & Times & $T_{\text{turnaround}} = T_{\text{completion}} - T_{\text{arrival}}$; $T_{\text{waiting}} = T_{\text{turnaround}} - T_{\text{burst}}$; $T_{\text{response}} = T_{\text{first run}} - T_{\text{arrival}}$ \\
+4 & Utilisation, throughput & $B/T$, \ $n/T$ \\
+5 & Burst prediction; RR & $\tau_{n+1} = \alpha t_n + (1-\alpha)\tau_n$; \ wait between turns $\le (n-1)q$ \\
+6 & Base/limit & $0 \le a < \text{limit} \Rightarrow a_{\text{phys}} = \text{base} + a$, else trap \\
+6 & Paging & $p = \lfloor a/2^{n}\rfloor$, $d = a \bmod 2^{n}$, $a_{\text{phys}} = f\cdot 2^{n} + d$ \\
+6 & TLB & $\text{EAT} = t_{\text{TLB}} + (2-\alpha)\,t_m$ \ (simplified, $t_{\text{TLB}} = 0$: $\alpha t_m + (1-\alpha) 2t_m$) \\
+7 & Page faults & $\text{EAT} = (1-p)\,t_m + p\,t_{\text{fault}}$ \\
+7 & Direct access & byte $= r \times$ size; block $= \lfloor \text{byte}/B \rfloor$; offset $=$ byte $\bmod B$ \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.6em}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.0cm}>{\ttfamily\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.0cm}>{\ttfamily\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Task} & \textbf{\rmfamily Command} & \textbf{Task} & \textbf{\rmfamily Command} \\
+\midrule
+Where am I? & pwd & Find lines & grep -n -i -v -c -w \\
+List long, hidden & ls -la \ (-h) & Field $k$ & cut -d, -f3 \\
+Change directory & cd \textasciitilde\ \ cd - \ cd .. & Sort & sort -n -r -t, -k5 \\
+Make folders & mkdir -p a/b & Count duplicates & sort | uniq -c \\
+Copy / move & cp -r a b \ mv a b & Skip header & tail -n +2 f \\
+Delete & rm -i f \ rm -r dir & Find files & find . -name "*.c" \\
+Links & ln f h \ ln -s f s & Redirect & > >> < 2> 2>\&1 \&> \\
+Look at a file & cat less head tail & Processes & ps aux \ ps -ef \ top \\
+Count, sizes & wc -l \ du -sh \ df -h & Jobs & cmd \& \ jobs \ fg \%1 \ bg \\
+Permissions & chmod 640 f \ chmod u+x f & Signals & kill PID \ kill -9 PID \\
+Users & whoami \ id \ groups & Priority & nice -n 10 cmd \\
+Owner (root) & sudo chown u:g f & Script & \#!/bin/bash \ \$1 \$\# \$? \\
+Help & man ls \ ls -{}-help & Arithmetic & \$((x + 1)) \ \$(cmd) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\section{The Worked Problems from the Lecture}
+\label{sec:lecture}
+
+All numbers below are computed by \texttt{code/theory\_check.py} (output in \texttt{code/out\_theory\_check.txt}).
+
+\Needspace{12\baselineskip}
+\subsection{Problem 1: SRTF and Round Robin}
+P1 (arrival $0$, burst $5$), P2 ($1$, $3$), P3 ($2$, $1$), P4 ($3$, $4$), times in ms.
+\begin{center}
+\makebox[1.6cm][r]{\textbf{SRTF}}\quad\gantt{0.85}{P1/0/1, P2/1/2, P3/2/3, P2/3/5, P1/5/9, P4/9/13}\\[0.6em]
+\makebox[1.6cm][r]{\textbf{RR, $q=2$}}\quad\gantt{0.85}{P1/0/2, P2/2/4, P3/4/5, P1/5/7, P4/7/9, P2/9/10, P1/10/11, P4/11/13}
+\end{center}
+SRTF: at $t=1$ P2 ($3$) preempts P1 ($4$ left); at $t=2$ P3 ($1$) preempts P2; P2 finishes at $5$; then P1 and P4 both need $4$~ms and the tie goes to P1 (earlier arrival). Waiting times $4, 1, 0, 6$: average $11/4 = 2.75$~ms; turnaround $9, 4, 1, 10$: average $6$~ms. RR: at $t=2$ the queue is P2, P3, P1 (P3 arrived exactly at $2$ and enters before the preempted P1). Waiting $6, 6, 2, 6$: average $5$~ms; turnaround $11, 9, 3, 10$: average $8.25$~ms; response $0, 1, 2, 4$: average $1.75$~ms (SRTF: $1.5$~ms).
+
+\subsection{Problem 2: address translation and TLB}
+Pages of $1$~KB $= 2^{10}$ bytes; page table $0\to5$, $1\to2$, $2\to7$, $3\to1$. Logical address $2500$: $p = \lfloor 2500/1024 \rfloor = 2$, $d = 2500 - 2048 = 452$, frame $7$, $a_{\text{phys}} = 7 \times 1024 + 452 = 7620$. With $t_{\text{TLB}} = 10$~ns, $t_m = 100$~ns, $\alpha = 0.9$: $\text{EAT} = 10 + 1.1 \times 100 = 120$~ns ($= 0.9 \times 110 + 0.1 \times 210$). For $\text{EAT} = 115$~ns: $10 + (2-\alpha)\,100 = 115 \Rightarrow \alpha = 0.95$.
+
+\subsection{Problem 3: page replacement}
+Reference string $3, 5, 1, 0, 3, 1, 0, 3, 1, 4, 1, 0$ with $3$ frames: FIFO $8$, LRU $7$, OPT $5$ faults. The LRU table (bold = page just loaded):
+\begin{center}
+\small
+\begin{tabular}{@{}l*{12}{c}@{}}
+\toprule
+ref & \textbf{3} & \textbf{5} & \textbf{1} & \textbf{0} & \textbf{3} & \textbf{1} & \textbf{0} & \textbf{3} & \textbf{1} & \textbf{4} & \textbf{1} & \textbf{0} \\ \midrule
+fr.\ 0 & \nw{3} & 3 & 3 & \nw{0} & 0 & 0 & 0 & 0 & 0 & \nw{4} & 4 & 4 \\
+fr.\ 1 &  & \nw{5} & 5 & 5 & \nw{3} & 3 & 3 & 3 & 3 & 3 & 3 & \nw{0} \\
+fr.\ 2 &  &  & \nw{1} & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+\midrule fault & \F & \F & \F & \F & \F &  &  &  &  & \F &  & \F \\ \bottomrule
+\end{tabular}
+\end{center}
+OPT at the fourth reference ($0$) evicts $5$, which is never used again, and at reference $4$ evicts $3$, also never needed again: $5$ faults, three of them compulsory.
+
+\subsection{Problem 4: short calculations}
+\begin{itemize}
+  \item $t_m = 100$~ns, $t_{\text{fault}} = 10$~ms $= 10^{7}$~ns, $p = 0.0002$: $\text{EAT} = 0.9998 \times 100 + 0.0002 \times 10^{7} = 99.98 + 2000 = 2099.98$~ns, $21$ times slower than RAM. Slow-down below $10\,\%$: $p < 10/9\,999\,900 \approx 1.0\times10^{-6}$.
+  \item Record $75$, records of $128$~B, blocks of $4096$~B: byte $9600$, block $\lfloor 9600/4096 \rfloor = 2$, offset $9600 - 8192 = 1408$; the last byte $9727$ is still in block $2$.
+  \item $U(3) = 1 - 0.6^{3} = 0.784$; batch $2/(2+3) = 0.4$; overhead $0.1/4.1 = 2.44\,\%$; Amdahl $1/(0.2 + 0.8/4) = 2.5$.
+\end{itemize}
+
+\subsection{Problems 5--7: command, pipeline, script}
+\textbf{Permissions.} \texttt{rwx r-x ---} $= 750$, so \cmd{chmod 750 report.sh}. After \cmd{umask 027} the bits $0$, $2$, $7$ are removed from $666$/$777$: new files $640$, new directories $750$.
+\Needspace{14\baselineskip}
+\lstinputlisting[style=term]{../code/out_wp_perm.txt}
+\textbf{Pipelines on \texttt{access.log}.} The top-N pattern \cmd{cut | sort | uniq -c | sort -rn | head}. For the 404 count, cut the status field first: \texttt{404} could also occur inside a byte count.
+\Needspace{11\baselineskip}
+\lstinputlisting[style=term]{../code/out_wp_pipe.txt}
+\textbf{Script \texttt{dept\_stats.sh}.} Note the integer division in \texttt{\$((sum / count))}: $1072/17 = 63.06$ is printed as $63$.
+\Needspace{22\baselineskip}
+\lstinputlisting[style=sh]{../code/dept_stats.sh}
+\Needspace{12\baselineskip}
+\lstinputlisting[style=term]{../code/out_wp_script_run.txt}
+
+% =====================================================================
+\section{Common Mistakes and Exam Strategy}
+\label{sec:mistakes}
+
+\begin{description}[leftmargin=0pt,itemsep=0.2em]
+  \item[Waiting vs.\ turnaround] Waiting $=$ turnaround $-$ burst; turnaround starts at the \emph{arrival}, not at $0$.
+  \item[Round Robin queue] A process arriving at the moment a quantum expires enters before the preempted process.
+  \item[Units] $8$~ms $= 8\,000\,000$~ns. Convert first, then substitute.
+  \item[TLB miss] A miss costs two memory accesses (page table and data) plus the TLB lookup.
+  \item[LRU vs.\ OPT] LRU looks backwards, OPT looks forwards.
+  \item[Block arithmetic] Records and blocks are numbered from $0$; check whether the last byte crosses into the next block.
+  \item[\texttt{uniq} without \texttt{sort}] \cmd{uniq -c} merges only \emph{adjacent} equal lines.
+  \item[Spaces] \texttt{x=5}, not \texttt{x = 5} (``command not found''); \texttt{[ \$a -gt 3 ]}, not \texttt{[\$a -gt 3]}.
+  \item[Quotes] \texttt{"\$x"} expands, \texttt{'\$x'} does not; quote names with spaces: \texttt{"final report.txt"}.
+  \item[\texttt{>} vs.\ \texttt{>>}] \texttt{>} overwrites, \texttt{>>} appends, \texttt{2>} redirects only errors.
+  \item[Too strong tools] \cmd{chmod 777}, \cmd{rm -r}, \cmd{kill -9}: too much permission, no undo, no clean-up.
+\end{description}
+
+\begin{tryit}[Exam strategy]
+\begin{itemize}
+  \item \textbf{Before:} redo the review questions of Weeks~1--7 and the lab sheets of Weeks~9--14; solve the Practice Final below on paper with a timer, then the sample paper; type every command of the sheet in \texttt{\textasciitilde/lab}.
+  \item \textbf{During:} read the whole paper first ($5$~min); start with what you know best; about one minute per point, so do Parts~A and D quickly and spend the time on Part~C; write formula $\to$ numbers $\to$ result with unit; state the conventions you use; never leave a question empty.
+\end{itemize}
+\end{tryit}
+
+% =====================================================================
+\Needspace{18\baselineskip}
+\section{Practice Final (100 points)}
+\label{sec:pf}
+
+Solve this paper on your own, in [90] minutes, before you read the solutions in Section~\ref{sec:pfsol}. Commands refer to the folder \texttt{\textasciitilde/lab} created by \cmd{mcmp117\_lab\_setup.sh}; assume your current directory is \texttt{\textasciitilde/lab} unless a question says otherwise.
+
+\subsection*{Part A --- Multiple choice (10 $\times$ 2 = 20 points)}
+\begin{enumerate}[leftmargin=1.6em,label=A\arabic*.]
+  \item Which of these is \emph{not} one of the three OS design goals of Week~2? \ (a) convenience \ (b) efficiency \ (c) ability to evolve \ (d) maximum hardware cost
+  \item In kernel mode the mode bit is \ (a) $0$ \ (b) $1$ \ (c) $2$ \ (d) undefined
+  \item A waiting process whose I/O completes moves to the state \ (a) running \ (b) ready \ (c) new \ (d) terminated
+  \item Which of these do the threads of one process \emph{share}? \ (a) stack \ (b) registers \ (c) heap \ (d) program counter
+  \item Which algorithm can show Belady's anomaly? \ (a) OPT \ (b) LRU \ (c) FIFO \ (d) none
+  \item A TLB caches \ (a) disk blocks \ (b) page-table entries \ (c) PCBs \ (d) file names
+  \item A directory has the mode \texttt{drwxr-x---}. A member of its group can \ (a) create files in it \ (b) list and enter it \ (c) only enter it \ (d) nothing
+  \item Which redirection \emph{appends} standard output to a file? \ (a) \texttt{>} \ (b) \texttt{>>} \ (c) \texttt{2>} \ (d) \texttt{<}
+  \item Which signal can a process neither catch nor ignore? \ (a) SIGTERM \ (b) SIGINT \ (c) SIGKILL \ (d) SIGTSTP
+  \item In a Bash script, \texttt{\$\#} is \ (a) the script name \ (b) the PID \ (c) the number of arguments \ (d) the last exit status
+\end{enumerate}
+
+\subsection*{Part B --- Short answers (3 $\times$ 4 = 12 points)}
+\begin{enumerate}[leftmargin=1.6em,label=B\arabic*.]
+  \item What is the difference between a program and a process? Name the five process states and the event that moves a process from running to waiting. \pts{4}
+  \item Explain internal and external fragmentation. Which one occurs with paging, and why not the other? \pts{4}
+  \item \texttt{notes.txt} has a hard link \texttt{h.txt} and a symbolic link \texttt{s.txt}. What happens to each after \cmd{rm notes.txt}? Explain with inodes. \pts{4}
+\end{enumerate}
+
+\subsection*{Part C --- Numerical problems (36 points)}
+\begin{enumerate}[leftmargin=1.6em,label=C\arabic*.]
+  \item Processes P1 (arrival $0$, burst $8$), P2 ($1$, $4$), P3 ($2$, $9$), P4 ($3$, $5$), times in ms. Draw the Gantt charts and compute the average waiting and turnaround times for (a) SJF (non-preemptive), (b) SRTF, (c) Round Robin with $q = 3$. Use the course conventions. \pts{12}
+  \item (a) Pages are $4$~KB. Page $5$ is in frame $9$. Translate the logical address \texttt{0x5C21} (give the result in hexadecimal and decimal). (b) How large is the page table for $32$-bit addresses, $8$~KB pages and $4$-byte entries? (c) $t_{\text{TLB}} = 20$~ns, $t_m = 80$~ns, $\alpha = 0.95$: compute the EAT (our convention). (d) Which hit ratio gives an EAT of $110$~ns? \pts{8}
+  \item Reference string $2, 3, 2, 1, 5, 2, 4, 5, 3, 2, 5, 2$ with $3$ frames: draw the frame tables and count the page faults for FIFO, OPT and LRU. \pts{8}
+  \item (a) $t_m = 150$~ns, $t_{\text{fault}} = 6$~ms, $p = 0.0001$: compute the EAT. What is the largest $p$ for a slow-down below $5\,\%$? (b) Records are $200$~B, blocks $1024$~B. In which block and at which offset does record $30$ start? Does it fit in one block? (c) Holes of $300$, $600$, $350$, $200$, $750$, $125$~KB (in this order); requests $115$, $500$, $358$, $200$, $375$~KB arrive in this order. Where does each request go with first-fit, best-fit and worst-fit? \pts{8}
+\end{enumerate}
+
+\subsection*{Part D --- Write the command (7 $\times$ 2 = 14 points)}
+\begin{enumerate}[leftmargin=1.6em,label=D\arabic*.]
+  \item You are in the directory \texttt{\textasciitilde/lab/projects/alpha/src}.\\ With \emph{one} \cmd{cd} and a \emph{relative} path, go to \texttt{\textasciitilde/lab/projects/beta/docs}.
+  \item Create the directories \texttt{archive/2025} and \texttt{archive/2026} with one command.
+  \item Copy all files ending in \texttt{.txt} from \texttt{docs/} into \texttt{backup/}.
+  \item Show the last three lines of \texttt{logs/system.log}.
+  \item Make \texttt{docs/syllabus.txt} readable and writable by its owner only (octal).
+  \item Start \texttt{sleep 600} in the background, list your jobs, then stop it politely with a signal.
+  \item List all files ending in \texttt{.c} anywhere below \texttt{projects}.
+\end{enumerate}
+
+\subsection*{Part E --- Write the pipeline (3 $\times$ 3 = 9 points)}
+\begin{enumerate}[leftmargin=1.6em,label=E\arabic*.]
+  \item How many lines of \texttt{logs/system.log} contain \texttt{ERROR}?
+  \item For \texttt{logs/access.log}, print how many requests got each status code, most frequent first.
+  \item For \texttt{data/students.csv}, print the number of students per department, largest first (skip the header line).
+\end{enumerate}
+
+\subsection*{Part F --- Write a script (9 points)}
+Write \texttt{count\_lines.sh} that takes one argument, a directory. If the argument is missing or is not a directory, print \texttt{usage: \dots} to standard error and exit with status $1$. Otherwise print, for every regular file in the directory, its name and number of lines, and finally the total.
+
+% =====================================================================
+\section{Practice Final: Worked Solutions}
+\label{sec:pfsol}
+
+\subsection*{Part A}
+A1~(d), A2~(a), A3~(b), A4~(c), A5~(c), A6~(b), A7~(b): r lets the group list, x lets it enter, without w it cannot create files; A8~(b), A9~(c), A10~(c).
+
+\subsection*{Part B}
+\begin{enumerate}[leftmargin=1.6em,label=B\arabic*.]
+  \item A program is a passive file on disk; a process is a program in execution, with its own memory (text, data, bss, heap, stack), registers and PCB; one program can run as several processes. States: new, ready, running, waiting, terminated. Running $\to$ waiting happens when the process makes a system call that must wait (I/O, \cmd{wait()} for a child, \cmd{sleep}).
+  \item External fragmentation: free memory is split into holes between allocated blocks, none big enough although the total would be. Internal fragmentation: memory inside an allocated block that is not used. Paging has only internal fragmentation (on average half a page per process, in the last page), because any free frame can hold any page, so no hole is ever too small.
+  \item \texttt{h.txt} is a second directory entry for the same inode; \cmd{rm} removes only the name \texttt{notes.txt} and lowers the link count from $2$ to $1$, so the data is still readable through \texttt{h.txt}. \texttt{s.txt} has its own inode and only contains the path \texttt{notes.txt}; that path no longer exists, so \texttt{s.txt} dangles (``No such file or directory'').
+\end{enumerate}
+
+\subsection*{Part C}
+\textbf{C1 (a) SJF.} At $t=0$ only P1 is ready and runs to $8$; then P2 ($4$), P4 ($5$), P3 ($9$).
+\begin{center}\gantt{0.5}{P1/0/8, P2/8/12, P4/12/17, P3/17/26}\end{center}
+Waiting: P1 $0$, P2 $8-1 = 7$, P3 $17-2 = 15$, P4 $12-3 = 9$; average $31/4 = 7.75$~ms. Turnaround $8, 11, 24, 14$: average $57/4 = 14.25$~ms.
+
+\textbf{(b) SRTF.} At $t=1$ P2 ($4$) preempts P1 ($7$ left); at $t=5$ P4 ($5$) runs before P1 ($7$); P3 ($9$) last.
+\begin{center}\gantt{0.5}{P1/0/1, P2/1/5, P4/5/10, P1/10/17, P3/17/26}\end{center}
+Waiting: P1 $17-0-8 = 9$, P2 $0$, P3 $15$, P4 $2$; average $26/4 = 6.5$~ms. Turnaround $17, 4, 24, 7$: average $52/4 = 13$~ms.
+
+\textbf{(c) RR, $q=3$.} Queue at $t=3$: P2, P3, P4 (all arrived by $3$; P4 arrived exactly at $3$ and enters before the preempted P1), P1.
+\begin{center}\gantt{0.5}{P1/0/3, P2/3/6, P3/6/9, P4/9/12, P1/12/15, P2/15/16, P3/16/19, P4/19/21, P1/21/23, P3/23/26}\end{center}
+Completion $23, 16, 26, 21$; turnaround $23, 15, 24, 18$: average $80/4 = 20$~ms. Waiting $15, 11, 15, 13$: average $54/4 = 13.5$~ms (response: average $3$~ms --- RR is worst for waiting here, best for response).
+
+\textbf{C2.} (a) $4$~KB $= 2^{12}$: the last three hex digits are the offset. $p = \texttt{0x5}$, $d = \texttt{0xC21} = 3105$; frame $9$: $a_{\text{phys}} = \texttt{0x9C21} = 9 \times 4096 + 3105 = 39\,969$. (b) $2^{32}/2^{13} = 2^{19} = 524\,288$ entries $\times\ 4$~B $= 2^{21}$~B $= 2$~MB. (c) $\text{EAT} = 20 + (2 - 0.95) \times 80 = 20 + 84 = 104$~ns. (d) $20 + (2-\alpha)\,80 = 110 \Rightarrow 2 - \alpha = 1.125 \Rightarrow \alpha = 0.875$.
+
+\textbf{C3.} FIFO $9$, OPT $6$, LRU $7$ faults (bold = page just loaded).
+\begin{center}
+\small
+\textbf{FIFO}\\[0.2em]
+\begin{tabular}{@{}l*{12}{c}@{}}
+\toprule
+ref & \textbf{2} & \textbf{3} & \textbf{2} & \textbf{1} & \textbf{5} & \textbf{2} & \textbf{4} & \textbf{5} & \textbf{3} & \textbf{2} & \textbf{5} & \textbf{2} \\ \midrule
+fr.\ 0 & \nw{2} & 2 & 2 & 2 & \nw{5} & 5 & 5 & 5 & \nw{3} & 3 & 3 & 3 \\
+fr.\ 1 &  & \nw{3} & 3 & 3 & 3 & \nw{2} & 2 & 2 & 2 & 2 & \nw{5} & 5 \\
+fr.\ 2 &  &  &  & \nw{1} & 1 & 1 & \nw{4} & 4 & 4 & 4 & 4 & \nw{2} \\
+\midrule fault & \F & \F &  & \F & \F & \F & \F &  & \F &  & \F & \F \\ \bottomrule
+\end{tabular}
+\\[0.6em]\textbf{OPT}\\[0.2em]
+\begin{tabular}{@{}l*{12}{c}@{}}
+\toprule
+ref & \textbf{2} & \textbf{3} & \textbf{2} & \textbf{1} & \textbf{5} & \textbf{2} & \textbf{4} & \textbf{5} & \textbf{3} & \textbf{2} & \textbf{5} & \textbf{2} \\ \midrule
+fr.\ 0 & \nw{2} & 2 & 2 & 2 & 2 & 2 & \nw{4} & 4 & 4 & \nw{2} & 2 & 2 \\
+fr.\ 1 &  & \nw{3} & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 3 & 3 \\
+fr.\ 2 &  &  &  & \nw{1} & \nw{5} & 5 & 5 & 5 & 5 & 5 & 5 & 5 \\
+\midrule fault & \F & \F &  & \F & \F &  & \F &  &  & \F &  &  \\ \bottomrule
+\end{tabular}
+\\[0.6em]\textbf{LRU}\\[0.2em]
+\begin{tabular}{@{}l*{12}{c}@{}}
+\toprule
+ref & \textbf{2} & \textbf{3} & \textbf{2} & \textbf{1} & \textbf{5} & \textbf{2} & \textbf{4} & \textbf{5} & \textbf{3} & \textbf{2} & \textbf{5} & \textbf{2} \\ \midrule
+fr.\ 0 & \nw{2} & 2 & 2 & 2 & 2 & 2 & 2 & 2 & \nw{3} & 3 & 3 & 3 \\
+fr.\ 1 &  & \nw{3} & 3 & 3 & \nw{5} & 5 & 5 & 5 & 5 & 5 & 5 & 5 \\
+fr.\ 2 &  &  &  & \nw{1} & 1 & 1 & \nw{4} & 4 & 4 & \nw{2} & 2 & 2 \\
+\midrule fault & \F & \F &  & \F & \F &  & \F &  & \F & \F &  &  \\ \bottomrule
+\end{tabular}
+\end{center}
+Key decisions: OPT at reference $5$ evicts $1$ (never used again), at $4$ evicts $2$ (used again latest of $2, 3, 5$: positions $10$, $9$, $8$ --- $2$ is needed at position $10$, $3$ at $9$, $5$ at $8$, so $2$ goes), at the second $2$ evicts $4$ ($4$ and $3$ are never used again; either choice gives the same count). LRU at $5$ evicts $3$ (least recently used), at $4$ evicts $1$.
+
+\textbf{C4.} (a) $\text{EAT} = 0.9999 \times 150 + 0.0001 \times 6\,000\,000 = 149.985 + 600 = 749.985$~ns, five times slower than RAM. Slow-down below $5\,\%$: $150 + p\,(6\,000\,000 - 150) < 157.5 \Rightarrow p < 7.5/5\,999\,850 \approx 1.25 \times 10^{-6}$. (b) Byte $30 \times 200 = 6000$; block $\lfloor 6000/1024 \rfloor = 5$; offset $6000 - 5120 = 880$. The last byte is $6199$, in block $\lfloor 6199/1024 \rfloor = 6$: the record crosses a block boundary and needs two block reads. (c)
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+& \textbf{115} & \textbf{500} & \textbf{358} & \textbf{200} & \textbf{375} \\
+\midrule
+First-fit & 300 (hole 1) & 600 (hole 2) & 750 (hole 5) & 350 (hole 3) & 392 left of hole 5 \\
+Best-fit & 125 (hole 6) & 600 (hole 2) & 750 (hole 5) & 200 (hole 4) & 392 left of hole 5 \\
+Worst-fit & 750 (hole 5) & 635 left of hole 5 & 600 (hole 2) & 350 (hole 3) & \textbf{must wait} \\
+\bottomrule
+\end{tabular}
+\end{center}
+After worst-fit the holes are $300, 242, 150, 200, 135, 125$~KB: none can hold $375$~KB, although $1152$~KB are free in total --- external fragmentation.
+
+\subsection*{Part D}
+Real output of each answer (\texttt{code/answers\_practice.sh}):
+\Needspace{7\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d1.txt}
+\Needspace{6\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d2.txt}
+\Needspace{9\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d3.txt}
+The wildcard also matched \texttt{final report.txt}: the shell passes the name with its space as \emph{one} argument, so \cmd{cp} has no problem with it.
+\Needspace{7\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d4.txt}
+\Needspace{6\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d5.txt}
+\Needspace{8\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d6.txt}
+\cmd{kill \%1} sends SIGTERM ($15$); \cmd{kill -15 \%1} or \cmd{kill PID} are also correct, \cmd{kill -9} is not ``polite''.
+\Needspace{6\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_d7.txt}
+Quote the pattern (\texttt{"*.c"}), so that \cmd{find} and not the shell expands it.
+
+\subsection*{Part E}
+\Needspace{5\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_e1.txt}
+(\cmd{grep ERROR logs/system.log | wc -l} is also correct.)
+\Needspace{10\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_e2.txt}
+\Needspace{8\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_e3.txt}
+
+\subsection*{Part F}
+\Needspace{19\baselineskip}
+\lstinputlisting[style=sh]{../code/count_lines.sh}
+\Needspace{17\baselineskip}
+\lstinputlisting[style=term]{../code/out_pf_f_run.txt}
+\textit{Grading guide:} argument and directory check with usage on stderr and \texttt{exit 1} ($3$~pt); loop over \texttt{"\$1"/*} with \texttt{-f} test ($2$); line count with \cmd{wc -l <} ($2$); total with \texttt{\$(( ))} and output ($2$).
+
+\subsection*{Extra drill (not part of the 100 points)}
+\begin{enumerate}[leftmargin=1.6em]
+  \item A program calls \cmd{fork()} in a loop four times. How many processes exist at the end? \emph{Answer:} $2^{4} = 16$, of which $15$ were created by \cmd{fork()}.
+  \item Amdahl, $S = 0.1$, $N = 8$. \emph{Answer:} $1/(0.1 + 0.9/8) = 1/0.2125 \approx 4.71$; limit $1/S = 10$.
+  \item $U(n) = 1 - 0.75^{n}$: $U(2)$, $U(4)$ and the smallest $n$ with $U \ge 90\,\%$. \emph{Answer:} $0.4375$, $0.684$; $n = 9$ ($U = 0.925$; $n = 8$ gives only $0.8999$).
+  \item A counting semaphore starts at $S = 2$; five threads call \texttt{wait(S)}. \emph{Answer:} two pass ($S$ becomes $0$), three block until other threads call \texttt{signal(S)}.
+  \item Exponential averaging with $\alpha = 0.5$, $\tau_0 = 12$~ms and bursts $8$, $4$, $10$~ms. \emph{Answer:} $\tau_1 = 10$, $\tau_2 = 7$, $\tau_3 = 8.5$~ms.
+\end{enumerate}
+
+% =====================================================================
+\section{Course Wrap-up and Where to Go Next}
+
+\begin{keyidea}[The course in eight sentences]
+\begin{enumerate}[leftmargin=1.4em]
+  \item An OS is a resource manager and an extended machine; dual mode and system calls protect it (Weeks~1--2).
+  \item Processes move between five states; the PCB and the context switch make multitasking possible (Week~3).
+  \item Threads and schedulers share the CPU: FCFS, SJF/SRTF, Priority and RR, judged by waiting and response time (Weeks~4--5).
+  \item Shared data needs mutual exclusion: mutex locks and semaphores (Week~5).
+  \item Memory is translated by the MMU: paging, TLB, virtual memory, page replacement (Weeks~6--7).
+  \item Files are inodes with names in directories; links give a file several names (Weeks~7 and~10).
+  \item The shell turns commands into processes and system calls: navigation, files, permissions, pipes, jobs (Weeks~9--13).
+  \item Scripts automate everything you can type (Week~14).
+\end{enumerate}
+\end{keyidea}
+
+The theory explains why the commands behave as they do: \cmd{ps} shows the process states of Week~3, \cmd{ls -i} the inodes of Week~7, \cmd{chmod} the protection that Week~2 motivated with dual mode, and every pipe is two processes connected by the kernel. Keep your \texttt{\textasciitilde/lab} folder and these notes: they are a reference you can use long after the exam.
+
+\subsection*{Keep practising}
+\begin{itemize}
+  \item Install Linux in a virtual machine or under Windows with WSL (\cmd{wsl --install}) and use it daily; a Raspberry Pi is a cheap Linux lab.
+  \item OverTheWire \emph{Bandit}, a free game that teaches the shell level by level: \url{https://overthewire.org/wargames/bandit/}
+  \item MIT, \emph{The Missing Semester of Your CS Education} (shell, scripting, tools): \url{https://missing.csail.mit.edu/}
+  \item \url{https://explainshell.com/} explains any command line; \url{https://www.shellcheck.net/} finds bugs in scripts.
+\end{itemize}
+
+\subsection*{Certifications (optional)}
+LPI \emph{Linux Essentials} is a good first goal; CompTIA \emph{Linux+} or LPI \emph{LPIC-1} are the next step; later Red Hat \emph{RHCSA} or the Linux Foundation's \emph{LFCS}. Exam objectives and fees change: check the official sites before you register.
+
+\subsection*{Further reading}
+\begin{itemize}
+  \item A.\ Silberschatz, P.\,B.\ Galvin and G.\ Gagne, \emph{Operating System Concepts}, 10th ed., Wiley: Chapters~1--2 (introduction, OS structures), 3 (processes), 4 (threads), 5 (CPU scheduling), 6 (synchronization tools), 9 (main memory), 10 (virtual memory), 13 (file-system interface).
+  \item R.\,H.\ and A.\,C.\ Arpaci-Dusseau, \emph{Operating Systems: Three Easy Pieces} (free online), for example:
+  \begin{itemize}
+    \item Chapter~4, ``The Abstraction: The Process'': \url{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf}
+    \item Chapter~7, ``Scheduling: Introduction'': \url{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf}
+    \item Chapter~18, ``Paging: Introduction'': \url{https://pages.cs.wisc.edu/~remzi/OSTEP/vm-paging.pdf}
+    \item Chapter~19, ``Paging: Faster Translations (TLBs)'': \url{https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf}
+    \item Chapter~22, ``Beyond Physical Memory: Policies'': \url{https://pages.cs.wisc.edu/~remzi/OSTEP/vm-beyondphys-policy.pdf}
+    \item Chapter~39, ``Interlude: Files and Directories'': \url{https://pages.cs.wisc.edu/~remzi/OSTEP/file-intro.pdf}
+  \end{itemize}
+  \item W.\,E.\ Shotts, \emph{The Linux Command Line}, No Starch Press (free PDF from the author: \url{https://linuxcommand.org/tlcl.php}).
+\end{itemize}
+
+\textbf{Good luck in the final exam --- and thank you for a great semester.} Questions before the exam: ask on the course Telegram channel [office hours before the exam: to be announced].
+
+\end{document}

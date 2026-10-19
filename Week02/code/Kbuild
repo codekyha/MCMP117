@@ -1,0 +1,2 @@
+# Kbuild file for the kernel module (used by: make module)
+obj-m += hello_module.o
