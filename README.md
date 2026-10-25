@@ -227,6 +227,8 @@ Found a mistake in the slides, notes or code? Please open an **Issue** in this r
 ## License
 
 This repository (slides, notes and example code) is released under the [MIT License](LICENSE).
-You may use, copy, modify and redistribute the materials, provided that the copyright notice and the license text are kept.
+You may use, copy, modify and redistribute the materials, provided that the copyright notice and the license text are kept.  The materials are provided "as is", without warranty of any kind;
+
+the author accepts no liability for their use. 
 
 © 2026 Hasan Oğuz · Istanbul Okan University
